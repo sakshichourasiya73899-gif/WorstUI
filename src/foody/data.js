@@ -43,4 +43,4 @@ export const foods = [
   },
 ];
 export const heroBowl =
-  "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=900&q=85";
+  "https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=900&q=85";
