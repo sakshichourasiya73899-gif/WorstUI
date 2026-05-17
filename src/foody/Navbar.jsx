@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShoppingBag, Menu, X } from "lucide-react";
+import { ShoppingCart, Menu, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "./CartContext";
@@ -11,7 +11,6 @@ const Navbar = () => {
 
   const scrollTo = (id) => {
     setMenuOpen(false);
-    // slight delay so mobile menu closes before scroll
     setTimeout(() => {
       const el = document.getElementById(id);
       if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -53,10 +52,10 @@ const Navbar = () => {
             {/* Cart */}
             <button
               onClick={() => navigate("/foody/checkout")}
-              className="relative w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:shadow-md transition"
+              className="relative w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center hover:border-neutral-300 hover:shadow-sm transition"
               aria-label="Cart"
             >
-              <ShoppingBag className="w-4 h-4 text-neutral-800" />
+              <ShoppingCart className="w-[18px] h-[18px] text-neutral-700" />
               {count > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#e63946] text-white text-[10px] flex items-center justify-center font-medium">
                   {count}
@@ -64,7 +63,7 @@ const Navbar = () => {
               )}
             </button>
 
-            {/* Sign Up — hidden on very small screens */}
+            {/* Sign Up */}
             <button
               onClick={() => navigate("/foody/auth")}
               className="hidden sm:block bg-[#e63946] hover:bg-[#d12d3a] text-white px-5 py-2.5 rounded-full text-sm font-medium transition shadow-sm"
