@@ -1,24 +1,15 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ChevronLeft, ChevronRight, BadgePercent } from "lucide-react";
+import { Star, BadgePercent } from "lucide-react";
 import Navbar from "@/foody/Navbar";
-import FoodCard from "@/foody/FoodCard";
-import CookieBanner from "@/foody/ConsentBanner";  // ← already exists
-import ChatWidget from "@/foody/ChatWidget";     // ← new file
+import MenuCarousel from "@/foody/MenuCarousel";
+import CookieBanner from "@/foody/ConsentBanner";
+import ChatWidget from "@/foody/ChatWidget";
 import { foods, heroBowl } from "@/foody/data";
-
-
 
 /* ─── Main Component ──────────────────────────────────── */
 const Foody = () => {
-
-  const scrollerRef = useRef(null);
   const [showCookie, setShowCookie] = useState(true);
-
-  const scrollMenu = (dir) => {
-    if (!scrollerRef.current) return;
-    scrollerRef.current.scrollBy({ left: dir * 280, behavior: "smooth" });
-  };
 
   const scrollToMenu = () => {
     document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" });
@@ -150,55 +141,8 @@ const Foody = () => {
       </section>
 
       {/* ── MENU ─────────────────────────────────────── */}
-      <section id="menu" className="relative max-w-7xl mx-auto px-6 md:px-12 pb-24">
-        <div className="flex items-end justify-between mb-16">
-          <div>
-            <h2 className="font-serif text-3xl md:text-4xl">Our Menu</h2>
-            <p className="text-sm text-neutral-500 mt-2">Hand-picked dishes from our chefs</p>
-          </div>
-          <div className="hidden md:flex gap-2">
-            <button
-              onClick={() => scrollMenu(-1)}
-              className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:shadow-md transition"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => scrollMenu(1)}
-              className="w-10 h-10 rounded-full bg-[#e63946] text-white shadow-sm flex items-center justify-center hover:bg-[#d12d3a] transition"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        <div
-          ref={scrollerRef}
-          className="flex gap-6 overflow-x-auto pb-8 pt-16 -mt-12 scroll-smooth snap-x snap-mandatory"
-          style={{ scrollbarWidth: "none" }}
-        >
-          {foods.map((f) => (
-            <div key={f.id} className="snap-start min-w-[220px] md:min-w-[240px] max-w-[260px]">
-              <FoodCard food={f} />
-            </div>
-          ))}
-        </div>
-
-        {/* Mobile arrows */}
-        <div className="flex md:hidden gap-2 justify-center mt-6">
-          <button
-            onClick={() => scrollMenu(-1)}
-            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => scrollMenu(1)}
-            className="w-10 h-10 rounded-full bg-[#e63946] text-white shadow-sm flex items-center justify-center"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+      <section id="menu" className="max-w-7xl mx-auto">
+        <MenuCarousel foods={foods} />
       </section>
 
       {/* ── ABOUT ────────────────────────────────────── */}
@@ -230,7 +174,6 @@ const Foody = () => {
 
       {/* ── CHAT WIDGET ──────────────────────────────── */}
       <ChatWidget />
-
     </div>
   );
 };

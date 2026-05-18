@@ -4,11 +4,12 @@ import { useCart } from "./CartContext";
 
 const FoodCard = ({ food }) => {
   const { addItem } = useCart();
+
   return (
     <motion.div
       whileHover={{ y: -6 }}
       transition={{ type: "spring", stiffness: 300, damping: 22 }}
-      className="relative bg-white rounded-[28px] pt-20 pb-6 px-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex-1"
+      className="relative bg-white rounded-[28px] pt-20 pb-6 px-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]"
     >
       <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full overflow-hidden shadow-md bg-white">
         <img src={food.image} alt={food.name} className="w-full h-full object-cover" />
