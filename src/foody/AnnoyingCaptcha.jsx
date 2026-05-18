@@ -1,52 +1,72 @@
 import { useState, useEffect } from "react";
+import { 
+  Cat, 
+  Dog, 
+  Waves, 
+  Droplet, 
+  CupSoda, 
+  CloudRain, 
+  Globe, 
+  TrafficCone, 
+  Sun, 
+  Activity, 
+  Circle, 
+  Pizza, 
+  HelpCircle, 
+  CheckCircle2, 
+  XCircle, 
+  ShieldAlert, 
+  Lock, 
+  Sparkles 
+} from "lucide-react";
 
-// Confusing CAPTCHA challenges
+// Confusing CAPTCHA challenges using premium Lucide React icons
 const CHALLENGES = [
     {
         question: "Select all images that are NOT a cat (but could be)",
         images: [
-            { emoji: "🐱", label: "cat", correct: false },   // IS a cat, so DON'T select
-            { emoji: "🦁", label: "lion", correct: true },    // could be a cat? sure
-            { emoji: "🐶", label: "dog", correct: false },    // no
-            { emoji: "🐯", label: "tiger", correct: true },   // big cat
-            { emoji: "🦊", label: "fox", correct: false },    // no
-            { emoji: "🐾", label: "paws", correct: true },    // paws could be cat
+            { icon: Cat, label: "house cat", correct: false },   // IS a cat, so DON'T select
+            { icon: Sparkles, label: "sparkle cat", correct: true },  // not a cat but could be
+            { icon: Dog, label: "canine", correct: false },    // no
+            { icon: Cat, label: "wild cat", correct: true },   // big cat
+            { icon: Globe, label: "globe cat", correct: true },    // no
+            { icon: HelpCircle, label: "mystery cat", correct: true },  // paws/mystery
         ],
-        instruction: "Click all that are NOT a cat (but could be a cat if they tried harder)",
+        instruction: "Click all that are NOT a standard house cat (but could be a cat if they tried harder)",
     },
     {
         question: "Which of these is the LEAST like a pizza?",
         images: [
-            { emoji: "🍕", label: "pizza", correct: false },
-            { emoji: "🫓", label: "flatbread", correct: false },
-            { emoji: "🎡", label: "ferris wheel", correct: true },
-            { emoji: "🍩", label: "donut", correct: false },
-            { emoji: "🌍", label: "globe", correct: false },
-            { emoji: "🥏", label: "frisbee", correct: false },
+            { icon: Pizza, label: "pizza", correct: false },
+            { icon: Circle, label: "flatbread", correct: false },
+            { icon: TrafficCone, label: "traffic cone", correct: true },
+            { icon: Circle, label: "donut", correct: false },
+            { icon: Globe, label: "globe", correct: false },
+            { icon: Circle, label: "frisbee", correct: false },
         ],
-        instruction: "Select the one that is LEAST like pizza (trick: they're all circles)",
+        instruction: "Select the one that is LEAST like pizza (trick: pizza is circular)",
     },
     {
         question: "Identify the traffic lights",
         images: [
-            { emoji: "🚦", label: "traffic light", correct: true },
-            { emoji: "🔴", label: "red circle", correct: false },
-            { emoji: "🟡", label: "yellow circle", correct: false },
-            { emoji: "🚥", label: "horizontal light", correct: false },  // intentionally wrong answer
-            { emoji: "🔆", label: "brightness", correct: false },
-            { emoji: "🪩", label: "disco ball", correct: false },
+            { icon: TrafficCone, label: "traffic light", correct: true },
+            { icon: Sun, label: "bright sun", correct: false },
+            { icon: Circle, label: "yellow light", correct: false },
+            { icon: Circle, label: "horizontal signal", correct: false },  // intentionally wrong answer
+            { icon: Sparkles, label: "brightness", correct: false },
+            { icon: Globe, label: "disco ball", correct: false },
         ],
         instruction: "Select ONLY the traffic lights (horizontal ones don't count, we checked)",
     },
     {
         question: "Select all images containing water",
         images: [
-            { emoji: "🌊", label: "wave", correct: true },
-            { emoji: "💧", label: "droplet", correct: true },
-            { emoji: "🧃", label: "juice box", correct: false },  // has liquid but not "water"
-            { emoji: "🍵", label: "tea", correct: false },        // water-based but we say no
-            { emoji: "🫧", label: "bubbles", correct: true },
-            { emoji: "🌧️", label: "rain cloud", correct: false }, // clouds aren't water... or are they
+            { icon: Waves, label: "wave", correct: true },
+            { icon: Droplet, label: "droplet", correct: true },
+            { icon: CupSoda, label: "juice box", correct: false },  // has liquid but not "water"
+            { icon: CupSoda, label: "tea", correct: false },        // water-based but we say no
+            { icon: Sparkles, label: "bubbles", correct: true },
+            { icon: CloudRain, label: "rain cloud", correct: false }, // clouds aren't water... or are they
         ],
         instruction: "Select all images with water (tea is not water, clouds are clouds, good luck)",
     },
@@ -116,7 +136,7 @@ export default function AnnoyingCaptcha({ onVerified }) {
             }}>
                 {/* Header */}
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                    <span style={{ fontSize: "1.5rem" }}>🤖</span>
+                    <Lock size={20} style={{ color: "#e63946" }} />
                     <div>
                         <p style={{ fontWeight: 800, fontSize: "0.95rem", margin: 0 }}>Security Verification™</p>
                         <p style={{ color: "#aaa", fontSize: "0.72rem", margin: 0 }}>Proving you're human (probably)</p>
@@ -142,6 +162,7 @@ export default function AnnoyingCaptcha({ onVerified }) {
                     {shuffled.map((img, i) => {
                         const isSel = selected.includes(i);
                         const isSpinning = spinIndex === i;
+                        const IconComponent = img.icon;
                         return (
                             <div
                                 key={i}
@@ -160,19 +181,29 @@ export default function AnnoyingCaptcha({ onVerified }) {
                                     overflow: "hidden",
                                 }}
                             >
-                                <span style={{ fontSize: "2.2rem", display: "block", lineHeight: 1.1 }}>{img.emoji}</span>
+                                <div style={{ 
+                                  display: "flex", 
+                                  alignItems: "center", 
+                                  justifyContent: "center", 
+                                  height: "40px", 
+                                  color: isSel ? "#e63946" : "#555" 
+                                }}>
+                                  <IconComponent size={32} />
+                                </div>
                                 <span style={{
                                     fontSize: "0.62rem", color: isSel ? "#e63946" : "#ccc",
                                     display: "block", marginTop: 6, fontWeight: 600
                                 }}>
-                                    {isSel ? "✓ selected" : img.label}
+                                    {isSel ? "selected" : img.label}
                                 </span>
                                 {isSel && (
                                     <div style={{
                                         position: "absolute", top: 4, right: 4, width: 16, height: 16,
                                         background: "#e63946", borderRadius: "50%", display: "flex",
                                         alignItems: "center", justifyContent: "center", fontSize: "0.6rem", color: "white"
-                                    }}>✓</div>
+                                    }}>
+                                      <CheckCircle2 size={10} />
+                                    </div>
                                 )}
                             </div>
                         );
@@ -182,14 +213,48 @@ export default function AnnoyingCaptcha({ onVerified }) {
                 {/* Feedback */}
                 {feedback && (
                     <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
                         padding: "10px 14px", borderRadius: 10, marginBottom: 12,
                         background: feedback.type === "success" ? "#f0fff4" : "#fff0f1",
                         border: `1px solid ${feedback.type === "success" ? "#b2f5c8" : "#ffd6d6"}`,
                         fontSize: "0.78rem", color: feedback.type === "success" ? "#2ecc71" : "#e63946",
                         fontWeight: 600
                     }}>
-                        {feedback.type === "success" ? "✅" : "❌"} {feedback.msg}
+                        {feedback.type === "success" ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
+                        <span>{feedback.msg}</span>
                     </div>
+                )}
+
+                {/* Skip option - unlocked only after 5 fails */}
+                {attempts >= 5 && (
+                    <label style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        marginBottom: 16,
+                        fontSize: "0.78rem",
+                        color: "#555",
+                        cursor: "pointer",
+                        background: "#f8f9fa",
+                        padding: "8px 12px",
+                        borderRadius: 10,
+                        border: "1px solid #e2e8f0",
+                        userSelect: "none"
+                    }}>
+                        <input 
+                            type="checkbox" 
+                            onChange={(e) => {
+                                if (e.target.checked) {
+                                    setFeedback({ type: "success", msg: "Verified instantly via laziness detection!" });
+                                    setTimeout(() => onVerified(), 800);
+                                }
+                            }}
+                            style={{ width: 14, height: 14, accentColor: "#e63946", cursor: "pointer" }} 
+                        />
+                        <span>Skip CAPTCHA (I certify that I am human)</span>
+                    </label>
                 )}
 
                 {/* Verify button - also moves a little */}
@@ -203,11 +268,11 @@ export default function AnnoyingCaptcha({ onVerified }) {
                         transition: "transform 0.3s"
                     }}
                 >
-                    {attempts === 0 ? "Verify I'm Human" : attempts < 3 ? "Try Again (You Can Do This)" : "Please Just Pass Me"}
+                    {attempts === 0 ? "Verify I'm Human" : attempts < 3 ? "Try Again" : "Please Just Pass Me"}
                 </button>
 
                 <p style={{ textAlign: "center", fontSize: "0.65rem", color: "#ddd", marginTop: 10, fontStyle: "italic" }}>
-                    Protected by reCAPTCHA Knock-Off™ · Privacy · Terms · 🍕
+                    Protected by reCAPTCHA Knock-Off™ · Privacy · Terms
                 </p>
             </div>
         </div>

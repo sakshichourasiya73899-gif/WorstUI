@@ -1,16 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Hand, UserCheck } from "lucide-react";
 
 const WALL_PADDING = 20;
 
 export default function FloatingButton({ label, onClick, containerRef }) {
     const btnRef = useRef(null);
     const posRef = useRef({ x: null, y: null });
-    const velRef = useRef({ vx: 2.5, vy: 1.8 });
     const corneredRef = useRef(false);
-    const frameRef = useRef(null);
     const [pos, setPos] = useState({ x: null, y: null });
     const [cornered, setCornered] = useState(false);
     const [message, setMessage] = useState(null);
+    const [hasStartedRunning, setHasStartedRunning] = useState(false);
 
     const CORNER_MESSAGES = [
         "Fine. You caught me.",
@@ -31,116 +31,110 @@ export default function FloatingButton({ label, onClick, containerRef }) {
         };
     }, [containerRef]);
 
-    // Initialise position
-    useEffect(() => {
-        const bounds = getContainerBounds();
-        const btnW = 180, btnH = 52;
-        const startX = bounds.left + (bounds.width - btnW) / 2;
-        const startY = bounds.top + bounds.height - 100;
-        posRef.current = { x: startX, y: startY };
-        setPos({ x: startX, y: startY });
-    }, [getContainerBounds]);
-
-    // Bounce animation when NOT cornered
-    useEffect(() => {
-        if (cornered) {
-            cancelAnimationFrame(frameRef.current);
-            return;
+    const handleMouseEnter = () => {
+        if (!hasStartedRunning && !cornered) {
+            const rect = btnRef.current.getBoundingClientRect();
+            // Store original coordinates dynamically
+            posRef.current = { x: rect.left, y: rect.top };
+            setPos({ x: rect.left, y: rect.top });
+            setHasStartedRunning(true);
         }
+    };
 
-        const btnW = 180, btnH = 52;
-
-        const animate = () => {
-            const bounds = getContainerBounds();
-            const minX = bounds.left + WALL_PADDING;
-            const maxX = bounds.left + bounds.width - btnW - WALL_PADDING;
-            const minY = bounds.top + WALL_PADDING;
-            const maxY = bounds.top + bounds.height - btnH - WALL_PADDING;
-
-            let { x, y } = posRef.current;
-            let { vx, vy } = velRef.current;
-
-            x += vx;
-            y += vy;
-
-            let nowCornered = false;
-
-            // Wall collisions
-            if (x <= minX) { x = minX; vx = Math.abs(vx); }
-            if (x >= maxX) { x = maxX; vx = -Math.abs(vx); }
-            if (y <= minY) { y = minY; vy = Math.abs(vy); }
-            if (y >= maxY) { y = maxY; vy = -Math.abs(vy); }
-
-            // Corner detection
-            const inCornerX = (x <= minX + 5 || x >= maxX - 5);
-            const inCornerY = (y <= minY + 5 || y >= maxY - 5);
-            if (inCornerX && inCornerY) {
-                nowCornered = true;
-                corneredRef.current = true;
-                setCornered(true);
-                setMessage(CORNER_MESSAGES[Math.floor(Math.random() * CORNER_MESSAGES.length)]);
-            }
-
-            posRef.current = { x, y };
-            velRef.current = { vx, vy };
-            setPos({ x, y });
-
-            if (!nowCornered) {
-                frameRef.current = requestAnimationFrame(animate);
-            }
-        };
-
-        frameRef.current = requestAnimationFrame(animate);
-        return () => cancelAnimationFrame(frameRef.current);
-    }, [cornered, getContainerBounds]);
-
-    // Mouse proximity — run away faster
+    // Magnetic Repulsion synced perfectly to cursor proximity and approach vector
     useEffect(() => {
-        if (cornered) return;
+        if (cornered || !hasStartedRunning) return;
+        
         const handleMouseMove = (e) => {
-            const btnW = 180, btnH = 52;
+            if (posRef.current.x === null) return;
+            const btnW = 180, btnH = 48;
+            
+            // Button center
             const cx = posRef.current.x + btnW / 2;
             const cy = posRef.current.y + btnH / 2;
-            const dx = e.clientX - cx;
-            const dy = e.clientY - cy;
+            
+            // Push vector
+            const dx = cx - e.clientX;
+            const dy = cy - e.clientY;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 160) {
-                // Flee! Speed up away from cursor
-                const flee = 6 / dist;
-                velRef.current = {
-                    vx: velRef.current.vx - dx * flee,
-                    vy: velRef.current.vy - dy * flee,
-                };
-                // Cap speed
-                const speed = Math.sqrt(velRef.current.vx ** 2 + velRef.current.vy ** 2);
-                if (speed > 9) {
-                    velRef.current.vx = (velRef.current.vx / speed) * 9;
-                    velRef.current.vy = (velRef.current.vy / speed) * 9;
+
+            // High proximity repulsion boundary: 180px
+            if (dist < 180) {
+                const angle = Math.atan2(dy, dx);
+                
+                // Exponential repulsion force: pushes stronger as cursor gets closer
+                let force = (180 - dist) * 0.48;
+                if (dist < 50) {
+                    force *= 1.8; // Turbo boost if mouse is extremely close!
                 }
+
+                let nextX = posRef.current.x + Math.cos(angle) * force;
+                let nextY = posRef.current.y + Math.sin(angle) * force;
+
+                const bounds = getContainerBounds();
+                const minX = bounds.left + WALL_PADDING;
+                const maxX = bounds.left + bounds.width - btnW - WALL_PADDING;
+                const minY = bounds.top + WALL_PADDING;
+                const maxY = bounds.top + bounds.height - btnH - WALL_PADDING;
+
+                // Enforce margins
+                if (nextX <= minX) nextX = minX;
+                if (nextX >= maxX) nextX = maxX;
+                if (nextY <= minY) nextY = minY;
+                if (nextY >= maxY) nextY = maxY;
+
+                // Detect locked corner state
+                const inCornerX = (nextX <= minX + 5 || nextX >= maxX - 5);
+                const inCornerY = (nextY <= minY + 5 || nextY >= maxY - 5);
+                
+                if (inCornerX && inCornerY) {
+                    corneredRef.current = true;
+                    setCornered(true);
+                    setMessage(CORNER_MESSAGES[Math.floor(Math.random() * CORNER_MESSAGES.length)]);
+                }
+
+                posRef.current = { x: nextX, y: nextY };
+                setPos({ x: nextX, y: nextY });
             }
         };
+
         window.addEventListener("mousemove", handleMouseMove);
         return () => window.removeEventListener("mousemove", handleMouseMove);
-    }, [cornered]);
+    }, [cornered, hasStartedRunning, getContainerBounds]);
 
-    const handleClick = () => {
+    const handleClick = (e) => {
         if (!cornered) {
-            // Bounce harder, tease
-            velRef.current = { vx: -6, vy: -5 };
+            e.preventDefault();
+            // Annoy them even more: if clicked in flight, teleport away with a teasing toast!
+            const bounds = getContainerBounds();
+            const btnW = 180, btnH = 48;
+            
+            const rx = bounds.left + WALL_PADDING + Math.random() * (bounds.width - btnW - 2 * WALL_PADDING);
+            const ry = bounds.top + WALL_PADDING + Math.random() * (bounds.height - btnH - 2 * WALL_PADDING);
+            
+            posRef.current = { x: rx, y: ry };
+            setPos({ x: rx, y: ry });
+            setMessage("Too slow! 😜");
+            
+            // Auto hide message after 1.5s
+            setTimeout(() => {
+                setMessage(null);
+            }, 1500);
             return;
         }
         onClick();
     };
 
-    if (pos.x === null) return null;
+    if (hasStartedRunning && pos.x === null) return null;
 
     return (
         <div
             ref={btnRef}
+            onMouseEnter={handleMouseEnter}
             style={{
-                position: "fixed",
-                left: pos.x,
-                top: pos.y,
+                position: hasStartedRunning ? "fixed" : "relative",
+                left: hasStartedRunning ? pos.x : undefined,
+                top: hasStartedRunning ? pos.y : undefined,
                 zIndex: 8888,
                 display: "flex",
                 flexDirection: "column",
@@ -164,23 +158,29 @@ export default function FloatingButton({ label, onClick, containerRef }) {
                 onClick={handleClick}
                 style={{
                     width: 180,
-                    background: cornered ? "#e63946" : "#ff6b6b",
+                    height: 48,
+                    background: cornered ? "#e63946" : "#18181b", // Elegant brand red when locked, sharp classic dark steel charcoal when running
                     color: "white",
-                    border: "none",
-                    borderRadius: 100,
-                    padding: "0.85rem 2rem",
-                    fontSize: "0.95rem",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                    borderRadius: 4, // Classic sharp rounded corners (premium designer aesthetic!)
+                    fontSize: "0.8rem",
                     fontWeight: 800,
-                    cursor: cornered ? "pointer" : "not-allowed",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    cursor: cornered ? "pointer" : "default",
                     fontFamily: "'Nunito', sans-serif",
-                    boxShadow: cornered
-                        ? "0 8px 30px rgba(230,57,70,0.45)"
-                        : "0 4px 20px rgba(255,107,107,0.4)",
-                    transition: "background 0.3s, box-shadow 0.3s",
+                    boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+                    transition: "background 0.2s, box-shadow 0.2s",
                     whiteSpace: "nowrap",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                 }}
             >
-                {cornered ? "✋ " + label : "🏃 " + label}
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                    {cornered ? <Hand size={15} /> : <UserCheck size={15} />}
+                    {label}
+                </span>
             </button>
             <style>{`@keyframes fadeInMsg { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }`}</style>
         </div>

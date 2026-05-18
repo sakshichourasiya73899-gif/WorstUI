@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ShoppingCart, Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ShoppingCart, Menu, X, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "./CartContext";
@@ -8,6 +8,18 @@ const Navbar = () => {
   const { count } = useCart();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem("currentUser");
+    if (userStr) {
+      try {
+        setCurrentUser(JSON.parse(userStr));
+      } catch (e) {
+        console.error("Error parsing currentUser", e);
+      }
+    }
+  }, []);
 
   const scrollTo = (id) => {
     setMenuOpen(false);
@@ -63,13 +75,23 @@ const Navbar = () => {
               )}
             </button>
 
-            {/* Sign Up */}
-            <button
-              onClick={() => navigate("/foody/auth")}
-              className="hidden sm:block bg-[#e63946] hover:bg-[#d12d3a] text-white px-5 py-2.5 rounded-full text-sm font-medium transition shadow-sm"
-            >
-              Sign Up
-            </button>
+            {/* Profile / Sign Up */}
+            {currentUser ? (
+              <button
+                onClick={() => navigate("/foody/profile")}
+                className="hidden sm:flex items-center gap-2 bg-[#e63946] hover:bg-[#d12d3a] text-white px-5 py-2.5 rounded-full text-sm font-medium transition shadow-sm"
+              >
+                <User size={16} />
+                <span>Profile</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate("/foody/auth")}
+                className="hidden sm:block bg-[#e63946] hover:bg-[#d12d3a] text-white px-5 py-2.5 rounded-full text-sm font-medium transition shadow-sm"
+              >
+                Sign Up
+              </button>
+            )}
 
             {/* Hamburger — mobile only */}
             <button
@@ -102,12 +124,23 @@ const Navbar = () => {
                     {l.label}
                   </button>
                 ))}
-                <button
-                  onClick={() => { setMenuOpen(false); navigate("/foody/auth"); }}
-                  className="mt-2 bg-[#e63946] hover:bg-[#d12d3a] text-white py-3 rounded-full text-sm font-medium transition"
-                >
-                  Sign Up
-                </button>
+                
+                {currentUser ? (
+                  <button
+                    onClick={() => { setMenuOpen(false); navigate("/foody/profile"); }}
+                    className="mt-2 flex items-center justify-center gap-2 bg-[#e63946] hover:bg-[#d12d3a] text-white py-3 rounded-full text-sm font-medium transition"
+                  >
+                    <User size={16} />
+                    <span>Profile</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => { setMenuOpen(false); navigate("/foody/auth"); }}
+                    className="mt-2 bg-[#e63946] hover:bg-[#d12d3a] text-white py-3 rounded-full text-sm font-medium transition"
+                  >
+                    Sign Up
+                  </button>
+                )}
               </div>
             </motion.div>
           )}

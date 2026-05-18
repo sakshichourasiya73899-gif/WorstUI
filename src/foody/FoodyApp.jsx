@@ -165,16 +165,22 @@ function AnnoyingCaptcha({ onVerified }) {
 // FLOATING BUTTON
 // ─────────────────────────────────────────────────
 function FloatingButton({ label, onClick, containerRef }) {
+    const btnRef = useRef(null);
     const posRef = useRef({ x: null, y: null });
-    const velRef = useRef({ vx: 2.8, vy: 2.1 });
     const corneredRef = useRef(false);
-    const frameRef = useRef(null);
     const [pos, setPos] = useState({ x: null, y: null });
     const [cornered, setCornered] = useState(false);
     const [message, setMessage] = useState(null);
-    const BTN_W = 180, BTN_H = 52, PAD = 20;
+    const [hasStartedRunning, setHasStartedRunning] = useState(false);
+    const BTN_W = 180, BTN_H = 48, WALL_PADDING = 20;
 
-    const CORNER_MSGS = ["Fine. You caught me.", "Ugh. Okay.", "I can't run anymore.", "You win. This time.", "...please be gentle."];
+    const CORNER_MSGS = [
+        "Fine. You caught me.",
+        "Ugh. Okay.",
+        "I can't run anymore.",
+        "...please be gentle.",
+        "You win. This time.",
+    ];
 
     const getBounds = useCallback(() => {
         const el = containerRef?.current;
@@ -183,82 +189,143 @@ function FloatingButton({ label, onClick, containerRef }) {
         return { left: r.left, top: r.top, width: r.width, height: r.height };
     }, [containerRef]);
 
-    useEffect(() => {
-        const b = getBounds();
-        const sx = b.left + (b.width - BTN_W) / 2;
-        const sy = b.top + b.height - 100;
-        posRef.current = { x: sx, y: sy };
-        setPos({ x: sx, y: sy });
-    }, [getBounds]);
+    const handleMouseEnter = () => {
+        if (!hasStartedRunning && !cornered) {
+            const rect = btnRef.current.getBoundingClientRect();
+            posRef.current = { x: rect.left, y: rect.top };
+            setPos({ x: rect.left, y: rect.top });
+            setHasStartedRunning(true);
+        }
+    };
 
     useEffect(() => {
-        if (cornered) { cancelAnimationFrame(frameRef.current); return; }
-        const animate = () => {
-            const b = getBounds();
-            const minX = b.left + PAD, maxX = b.left + b.width - BTN_W - PAD;
-            const minY = b.top + PAD, maxY = b.top + b.height - BTN_H - PAD;
-            let { x, y } = posRef.current;
-            let { vx, vy } = velRef.current;
-            x += vx; y += vy;
-            if (x <= minX) { x = minX; vx = Math.abs(vx); }
-            if (x >= maxX) { x = maxX; vx = -Math.abs(vx); }
-            if (y <= minY) { y = minY; vy = Math.abs(vy); }
-            if (y >= maxY) { y = maxY; vy = -Math.abs(vy); }
-            const inCornerX = x <= minX + 4 || x >= maxX - 4;
-            const inCornerY = y <= minY + 4 || y >= maxY - 4;
-            if (inCornerX && inCornerY && !corneredRef.current) {
-                corneredRef.current = true;
-                setCornered(true);
-                setMessage(CORNER_MSGS[Math.floor(Math.random() * CORNER_MSGS.length)]);
-            }
-            posRef.current = { x, y };
-            velRef.current = { vx, vy };
-            setPos({ x, y });
-            if (!corneredRef.current) frameRef.current = requestAnimationFrame(animate);
-        };
-        frameRef.current = requestAnimationFrame(animate);
-        return () => cancelAnimationFrame(frameRef.current);
-    }, [cornered, getBounds]);
-
-    useEffect(() => {
-        if (cornered) return;
-        const flee = (e) => {
-            const cx = posRef.current.x + BTN_W / 2, cy = posRef.current.y + BTN_H / 2;
-            const dx = e.clientX - cx, dy = e.clientY - cy;
+        if (cornered || !hasStartedRunning) return;
+        
+        const handleMouseMove = (e) => {
+            if (posRef.current.x === null) return;
+            
+            const cx = posRef.current.x + BTN_W / 2;
+            const cy = posRef.current.y + BTN_H / 2;
+            
+            const dx = cx - e.clientX;
+            const dy = cy - e.clientY;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 160) {
-                const f = 7 / dist;
-                let nvx = velRef.current.vx - dx * f, nvy = velRef.current.vy - dy * f;
-                const spd = Math.sqrt(nvx ** 2 + nvy ** 2);
-                if (spd > 10) { nvx = (nvx / spd) * 10; nvy = (nvy / spd) * 10; }
-                velRef.current = { vx: nvx, vy: nvy };
+
+            if (dist < 180) {
+                const angle = Math.atan2(dy, dx);
+                
+                let force = (180 - dist) * 0.48;
+                if (dist < 50) {
+                    force *= 1.8;
+                }
+
+                let nextX = posRef.current.x + Math.cos(angle) * force;
+                let nextY = posRef.current.y + Math.sin(angle) * force;
+
+                const bounds = getBounds();
+                const minX = bounds.left + WALL_PADDING;
+                const maxX = bounds.left + bounds.width - BTN_W - WALL_PADDING;
+                const minY = bounds.top + WALL_PADDING;
+                const maxY = bounds.top + bounds.height - BTN_H - WALL_PADDING;
+
+                if (nextX <= minX) nextX = minX;
+                if (nextX >= maxX) nextX = maxX;
+                if (nextY <= minY) nextY = minY;
+                if (nextY >= maxY) nextY = maxY;
+
+                const inCornerX = (nextX <= minX + 5 || nextX >= maxX - 5);
+                const inCornerY = (nextY <= minY + 5 || nextY >= maxY - 5);
+                
+                if (inCornerX && inCornerY) {
+                    corneredRef.current = true;
+                    setCornered(true);
+                    setMessage(CORNER_MSGS[Math.floor(Math.random() * CORNER_MSGS.length)]);
+                }
+
+                posRef.current = { x: nextX, y: nextY };
+                setPos({ x: nextX, y: nextY });
             }
         };
-        window.addEventListener("mousemove", flee);
-        return () => window.removeEventListener("mousemove", flee);
-    }, [cornered]);
 
-    if (pos.x === null) return null;
+        window.addEventListener("mousemove", handleMouseMove);
+        return () => window.removeEventListener("mousemove", handleMouseMove);
+    }, [cornered, hasStartedRunning, getBounds]);
+
+    const handleClick = (e) => {
+        if (!cornered) {
+            e.preventDefault();
+            const bounds = getBounds();
+            
+            const rx = bounds.left + WALL_PADDING + Math.random() * (bounds.width - BTN_W - 2 * WALL_PADDING);
+            const ry = bounds.top + WALL_PADDING + Math.random() * (bounds.height - BTN_H - 2 * WALL_PADDING);
+            
+            posRef.current = { x: rx, y: ry };
+            setPos({ x: rx, y: ry });
+            setMessage("Too slow! 😜");
+            
+            setTimeout(() => {
+                setMessage(null);
+            }, 1500);
+            return;
+        }
+        onClick();
+    };
+
+    if (hasStartedRunning && pos.x === null) return null;
 
     return (
-        <div style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 8888, display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+        <div
+            ref={btnRef}
+            onMouseEnter={handleMouseEnter}
+            style={{
+                position: hasStartedRunning ? "fixed" : "relative",
+                left: hasStartedRunning ? pos.x : undefined,
+                top: hasStartedRunning ? pos.y : undefined,
+                zIndex: 8888,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 5,
+                pointerEvents: "auto",
+            }}
+        >
             {message && (
-                <div style={{ background: "#fff", border: "2px solid #e63946", borderRadius: 12, padding: "5px 12px", fontSize: "0.72rem", color: "#e63946", fontWeight: 700, whiteSpace: "nowrap", fontFamily: "'Nunito',sans-serif", boxShadow: "0 4px 16px rgba(230,57,70,0.15)", animation: "fadeInMsg 0.3s ease" }}>
+                <div style={{
+                    background: "#fff", border: "2px solid #e63946", borderRadius: 12,
+                    padding: "5px 12px", fontSize: "0.72rem", color: "#e63946",
+                    fontWeight: 700, whiteSpace: "nowrap", fontFamily: "'Nunito', sans-serif",
+                    boxShadow: "0 4px 16px rgba(230,57,70,0.15)",
+                    animation: "fadeInMsg 0.3s ease"
+                }}>
                     {message}
                 </div>
             )}
             <button
-                onClick={() => cornered ? onClick() : (velRef.current = { vx: -7, vy: -6 })}
+                onClick={handleClick}
                 style={{
-                    width: BTN_W, background: cornered ? "#e63946" : "#ff6b6b",
-                    color: "white", border: "none", borderRadius: 100, padding: "0.85rem 2rem",
-                    fontSize: "0.95rem", fontWeight: 800, cursor: cornered ? "pointer" : "default",
-                    fontFamily: "'Nunito',sans-serif", whiteSpace: "nowrap",
-                    boxShadow: cornered ? "0 8px 30px rgba(230,57,70,0.45)" : "0 4px 20px rgba(255,107,107,0.4)",
-                    transition: "background 0.3s",
+                    width: BTN_W,
+                    height: BTN_H,
+                    background: cornered ? "#e63946" : "#18181b",
+                    color: "white",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                    borderRadius: 4,
+                    fontSize: "0.8rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    cursor: cornered ? "pointer" : "default",
+                    fontFamily: "'Nunito', sans-serif",
+                    boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+                    transition: "background 0.2s, box-shadow 0.2s",
+                    whiteSpace: "nowrap",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                 }}
             >
-                {cornered ? `✋ ${label}` : `🏃 ${label}`}
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                    {label}
+                </span>
             </button>
         </div>
     );
@@ -413,7 +480,15 @@ export default function FoodyApp() {
                 <div style={{ background: "#f5f1f1", borderRadius: 16, padding: "1.2rem", marginBottom: "1.5rem", textAlign: "left" }}>
                     <p style={{ fontWeight: 700, margin: "0 0 2px" }}>{user.name}</p>
                     <p style={{ color: "#888", fontSize: "0.85rem", margin: "0 0 10px" }}>{user.email}</p>
-                    <p style={{ color: "#aaa", fontSize: "0.75rem", margin: 0, fontStyle: "italic" }}>🧂 Codename: Cumin</p>
+                    <p style={{ color: "#aaa", fontSize: "0.75rem", margin: 0, fontStyle: "italic", display: "flex", alignItems: "center", gap: 4 }}>
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "inline-block", verticalAlign: "middle" }}>
+                        <path d="M6 18C8.5 15.5 14.5 12.5 17 9.5C14.5 12 8.5 15 6 18Z" stroke="#8b5a2b" strokeWidth="2" strokeLinecap="round" fill="#b48352"/>
+                        <path d="M8.5 15.5C10.5 14 13.5 12.5 15 11.5" stroke="#6f421b" strokeWidth="1" strokeLinecap="round"/>
+                        <path d="M8 12C10.5 10 15.5 8 18 6C15.5 8 10.5 10.5 8 12Z" stroke="#8b5a2b" strokeWidth="2" strokeLinecap="round" fill="#d2b48c"/>
+                        <path d="M10.5 10C12.5 9 14.5 8 16 7.5" stroke="#6f421b" strokeWidth="1" strokeLinecap="round"/>
+                      </svg>
+                      Codename: Cumin
+                    </p>
                     <p style={{ color: "#aaa", fontSize: "0.75rem", margin: "4px 0 0", fontStyle: "italic" }}>⏱ Time wasted: {fmt(secs)}</p>
                 </div>
                 <button onClick={logout} style={{ background: "#e63946", color: "white", border: "none", borderRadius: 100, padding: "0.85rem 2rem", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", width: "100%", fontFamily: "inherit" }}>

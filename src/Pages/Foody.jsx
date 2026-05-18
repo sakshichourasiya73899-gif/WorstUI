@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, BadgePercent } from "lucide-react";
+import { Star, BadgePercent, CheckCircle2 } from "lucide-react";
 import Navbar from "@/foody/Navbar";
 import MenuCarousel from "@/foody/MenuCarousel";
 import CookieBanner from "@/foody/ConsentBanner";
@@ -10,6 +10,14 @@ import { foods, heroBowl } from "@/foody/data";
 /* ─── Main Component ──────────────────────────────────── */
 const Foody = () => {
   const [showCookie, setShowCookie] = useState(true);
+  const [showDeletedAlert, setShowDeletedAlert] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem("showDeletedConfirmation") === "true") {
+      setShowDeletedAlert(true);
+      localStorage.removeItem("showDeletedConfirmation");
+    }
+  }, []);
 
   const scrollToMenu = () => {
     document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" });
@@ -174,6 +182,79 @@ const Foody = () => {
 
       {/* ── CHAT WIDGET ──────────────────────────────── */}
       <ChatWidget />
+
+      {/* ── ACCOUNT DELETED CONFIRMATION MODAL ── */}
+      <AnimatePresence>
+        {showDeletedAlert && (
+          <div style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.65)",
+            zIndex: 100000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: "'Nunito', sans-serif",
+            padding: "1rem"
+          }}>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              style={{
+                background: "white",
+                borderRadius: 24,
+                padding: "2.5rem 2rem",
+                maxWidth: 420,
+                width: "100%",
+                textAlign: "center",
+                boxShadow: "0 25px 60px rgba(0,0,0,0.25)"
+              }}
+            >
+              <div style={{
+                width: 60,
+                height: 60,
+                borderRadius: "50%",
+                background: "#e63946",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 1.2rem",
+                color: "white",
+                boxShadow: "0 8px 20px rgba(230, 57, 70, 0.25)"
+              }}>
+                <CheckCircle2 size={32} />
+              </div>
+              <h2 style={{ fontFamily: "Georgia, serif", fontSize: "1.8rem", margin: "0 0 10px", color: "#222" }}>
+                Account Obliterated
+              </h2>
+              <p style={{ color: "#666", fontSize: "0.9rem", lineHeight: 1.5, margin: "0 0 24px" }}>
+                Your account and all spice settings (including Cumin) have been permanently and successfully deleted from our database. We've cleaned the kitchen!
+              </p>
+              <button
+                onClick={() => setShowDeletedAlert(false)}
+                style={{
+                  background: "#e63946",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 100,
+                  padding: "0.8rem 2.5rem",
+                  fontSize: "0.9rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  width: "100%",
+                  boxShadow: "0 5px 15px rgba(230, 57, 70, 0.2)",
+                  transition: "background 0.2s"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#b3212c"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "#e63946"}
+              >
+                Got it
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

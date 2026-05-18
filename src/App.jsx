@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Foody from "./Pages/Foody";
 import FoodyAuth from "./Pages/FoodyAuth";
 import FoodyCheckout from "./Pages/FoodyCheckout";
+import FoodyProfile from "./Pages/FoodyProfile";
 import { CartProvider } from "./foody/CartContext";
 import "./App.css";
 
@@ -14,6 +15,7 @@ function App() {
         <Route path="/foody" element={<CartProvider><Foody /></CartProvider>} />
         <Route path="/foody/auth" element={<CartProvider><FoodyAuth /></CartProvider>} />
         <Route path="/foody/checkout" element={<CartProvider><FoodyCheckout /></CartProvider>} />
+        <Route path="/foody/profile" element={<CartProvider><FoodyProfile /></CartProvider>} />
         <Route path="*" element={<Navigate to="/foody" replace />} />
       </Routes>
     </BrowserRouter>
