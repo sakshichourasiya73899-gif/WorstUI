@@ -1,14 +1,19 @@
-import { useRef } from "react";
-import { motion } from "framer-motion";
+import { useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Star, ChevronLeft, ChevronRight, BadgePercent } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import Navbar from "@/foody/Navbar";
 import FoodCard from "@/foody/FoodCard";
+import CookieBanner from "@/foody/ConsentBanner";  // ← already exists
+import ChatWidget from "@/foody/ChatWidget";     // ← new file
 import { foods, heroBowl } from "@/foody/data";
 
+
+
+/* ─── Main Component ──────────────────────────────────── */
 const Foody = () => {
-  const navigate = useNavigate();
+
   const scrollerRef = useRef(null);
+  const [showCookie, setShowCookie] = useState(true);
 
   const scrollMenu = (dir) => {
     if (!scrollerRef.current) return;
@@ -23,9 +28,10 @@ const Foody = () => {
     <div className="min-h-screen bg-[#f5f1f1] font-sans text-neutral-900 overflow-x-hidden">
       <Navbar />
 
-      {/* HERO */}
+      {/* ── HERO ─────────────────────────────────────── */}
       <section id="home" className="relative max-w-7xl mx-auto px-6 md:px-12 pt-8 pb-24">
         <div className="grid md:grid-cols-2 gap-8 items-center">
+
           {/* Left */}
           <div className="relative z-10">
             <motion.h1
@@ -58,7 +64,12 @@ const Foody = () => {
                     "https://i.pravatar.cc/40?img=32",
                     "https://i.pravatar.cc/40?img=47",
                   ].map((src, i) => (
-                    <img key={i} src={src} alt="" className="w-8 h-8 rounded-full border-2 border-[#f5f1f1] object-cover" />
+                    <img
+                      key={i}
+                      src={src}
+                      alt=""
+                      className="w-8 h-8 rounded-full border-2 border-[#f5f1f1] object-cover"
+                    />
                   ))}
                   <div className="w-8 h-8 rounded-full bg-neutral-900 text-white text-[10px] font-medium flex items-center justify-center border-2 border-[#f5f1f1]">
                     45+
@@ -73,7 +84,7 @@ const Foody = () => {
             </div>
           </div>
 
-          {/* Right - Hero image */}
+          {/* Right */}
           <div className="relative flex items-center justify-center">
             <motion.div
               animate={{ y: [0, -14, 0] }}
@@ -81,7 +92,11 @@ const Foody = () => {
               className="relative"
             >
               <div className="w-[320px] h-[320px] md:w-[440px] md:h-[440px] rounded-full overflow-hidden shadow-2xl bg-white">
-                <img src={heroBowl} alt="Signature pasta bowl" className="w-full h-full object-cover" />
+                <img
+                  src={heroBowl}
+                  alt="Signature pasta bowl"
+                  className="w-full h-full object-cover"
+                />
               </div>
 
               {/* Floating discount card */}
@@ -94,7 +109,10 @@ const Foody = () => {
                 <BadgePercent className="w-6 h-6 text-[#e63946]" />
                 <div>
                   <p className="text-lg font-bold leading-none">5%</p>
-                  <p className="text-[10px] text-[#e63946] font-semibold mt-1">Discount <span className="text-neutral-500 font-normal">for 2 orders</span></p>
+                  <p className="text-[10px] text-[#e63946] font-semibold mt-1">
+                    Discount{" "}
+                    <span className="text-neutral-500 font-normal">for 2 orders</span>
+                  </p>
                 </div>
               </motion.div>
 
@@ -122,13 +140,16 @@ const Foody = () => {
               </motion.div>
             </motion.div>
           </div>
+
         </div>
 
-        {/* Floating decorative leaves */}
-        <div className="absolute left-4 top-1/2 text-5xl opacity-80 pointer-events-none hidden md:block">🌿</div>
+        {/* Floating decorative leaf */}
+        <div className="absolute left-4 top-1/2 text-5xl opacity-80 pointer-events-none hidden md:block">
+          🌿
+        </div>
       </section>
 
-      {/* FOOD MENU */}
+      {/* ── MENU ─────────────────────────────────────── */}
       <section id="menu" className="relative max-w-7xl mx-auto px-6 md:px-12 pb-24">
         <div className="flex items-end justify-between mb-16">
           <div>
@@ -136,10 +157,16 @@ const Foody = () => {
             <p className="text-sm text-neutral-500 mt-2">Hand-picked dishes from our chefs</p>
           </div>
           <div className="hidden md:flex gap-2">
-            <button onClick={() => scrollMenu(-1)} className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:shadow-md transition">
+            <button
+              onClick={() => scrollMenu(-1)}
+              className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:shadow-md transition"
+            >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button onClick={() => scrollMenu(1)} className="w-10 h-10 rounded-full bg-[#e63946] text-white shadow-sm flex items-center justify-center hover:bg-[#d12d3a] transition">
+            <button
+              onClick={() => scrollMenu(1)}
+              className="w-10 h-10 rounded-full bg-[#e63946] text-white shadow-sm flex items-center justify-center hover:bg-[#d12d3a] transition"
+            >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -157,18 +184,24 @@ const Foody = () => {
           ))}
         </div>
 
-        {/* Mobile nav arrows */}
+        {/* Mobile arrows */}
         <div className="flex md:hidden gap-2 justify-center mt-6">
-          <button onClick={() => scrollMenu(-1)} className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center">
+          <button
+            onClick={() => scrollMenu(-1)}
+            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center"
+          >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <button onClick={() => scrollMenu(1)} className="w-10 h-10 rounded-full bg-[#e63946] text-white shadow-sm flex items-center justify-center">
+          <button
+            onClick={() => scrollMenu(1)}
+            className="w-10 h-10 rounded-full bg-[#e63946] text-white shadow-sm flex items-center justify-center"
+          >
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </section>
 
-      {/* ABOUT */}
+      {/* ── ABOUT ────────────────────────────────────── */}
       <section id="about" className="max-w-5xl mx-auto px-6 md:px-12 py-20 text-center">
         <h2 className="font-serif text-3xl md:text-4xl">About Foody</h2>
         <p className="text-neutral-600 mt-6 max-w-2xl mx-auto leading-relaxed">
@@ -177,14 +210,27 @@ const Foody = () => {
         </p>
       </section>
 
-      {/* FOOTER */}
+      {/* ── FOOTER ───────────────────────────────────── */}
       <footer id="contact" className="border-t border-neutral-200/60 mt-10">
         <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-neutral-500">
-          <p className="font-serif italic text-xl text-neutral-900">F<span className="text-[#e63946]">oo</span>dy</p>
+          <p className="font-serif italic text-xl text-neutral-900">
+            F<span className="text-[#e63946]">oo</span>dy
+          </p>
           <p>© 2026 Foody. All rights reserved.</p>
           <p>hello@foody.com</p>
         </div>
       </footer>
+
+      {/* ── COOKIE BANNER ────────────────────────────── */}
+      <AnimatePresence>
+        {showCookie && (
+          <CookieBanner onDismiss={() => setShowCookie(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* ── CHAT WIDGET ──────────────────────────────── */}
+      <ChatWidget />
+
     </div>
   );
 };

@@ -105,11 +105,10 @@ const FoodyCheckout = () => {
                     key={p.id}
                     type="button"
                     onClick={() => setPayment(p.id)}
-                    className={`py-3.5 rounded-full text-sm font-medium transition ${
-                      payment === p.id
+                    className={`py-3.5 rounded-full text-sm font-medium transition ${payment === p.id
                         ? "bg-[#e63946] text-white shadow-md"
                         : "bg-[#f5f1f1] text-neutral-700 hover:bg-neutral-200"
-                    }`}
+                      }`}
                   >
                     {p.label}
                   </button>
