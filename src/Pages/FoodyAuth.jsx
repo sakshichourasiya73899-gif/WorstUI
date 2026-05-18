@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Mail, Lock, User } from "lucide-react";
-import { getWeightTilt, getHangOffset, getDropOffset } from "./physics.js";
-import AnnoyingCaptcha from "./AnnoyingCaptcha.jsx";
-import FloatingButton from "./FloatingButton.jsx";
+import { getWeightTilt, getHangOffset, getDropOffset } from "../foody/Physics.js";
+import AnnoyingCaptcha from "../foody/AnnoyingCaptcha.jsx";
+import FloatingButton from "../foody/FloatingButton.jsx";
+
 
 const TERMS = [
   "1. We own your soul. Your cat's soul too. Non-negotiable.",
