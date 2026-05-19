@@ -5,12 +5,14 @@ import Navbar from "@/foody/Navbar";
 import MenuCarousel from "@/foody/MenuCarousel";
 import CookieBanner from "@/foody/ConsentBanner";
 import ChatWidget from "@/foody/ChatWidget";
+import BookTableWizard from "@/foody/BookTableWizard";
 import { foods, heroBowl } from "@/foody/data";
 
 /* ─── Main Component ──────────────────────────────────── */
 const Foody = () => {
   const [showCookie, setShowCookie] = useState(true);
   const [showDeletedAlert, setShowDeletedAlert] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("showDeletedConfirmation") === "true") {
@@ -21,6 +23,12 @@ const Foody = () => {
 
   const scrollToMenu = () => {
     document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Called when wizard closes — navigate to home section
+  const handleWizardClose = () => {
+    setShowWizard(false);
+    document.getElementById("home")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -49,7 +57,11 @@ const Foody = () => {
               >
                 View Menu
               </button>
-              <button className="bg-white hover:bg-neutral-50 text-neutral-900 px-8 py-3.5 rounded-full text-sm font-medium transition shadow-sm">
+              {/* ← WIRED UP */}
+              <button
+                onClick={() => setShowWizard(true)}
+                className="bg-white hover:bg-neutral-50 text-neutral-900 px-8 py-3.5 rounded-full text-sm font-medium transition shadow-sm"
+              >
                 Book A Table
               </button>
             </div>
@@ -182,6 +194,13 @@ const Foody = () => {
 
       {/* ── CHAT WIDGET ──────────────────────────────── */}
       <ChatWidget />
+
+      {/* ── BOOK TABLE WIZARD ────────────────────────── */}
+      <AnimatePresence>
+        {showWizard && (
+          <BookTableWizard onClose={handleWizardClose} />
+        )}
+      </AnimatePresence>
 
       {/* ── ACCOUNT DELETED CONFIRMATION MODAL ── */}
       <AnimatePresence>

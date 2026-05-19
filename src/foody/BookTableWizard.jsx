@@ -1,225 +1,411 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     ChevronRight, ChevronLeft, CheckCircle2, AlertCircle,
-    Loader2, X, Utensils, Phone, Mail, User, Delete, ZoomIn,
+    Loader2, X, Utensils, Delete, ZoomIn, Phone,
 } from "lucide-react";
 
-/* ══════════════════════════════════════════════════
-   GLOBAL RAGE CURSOR — grows on every click
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   RAGE CURSOR — grows with every click
+══════════════════════════════════════════════════════════════ */
 const RageCursor = () => {
     const [size, setSize] = useState(16);
-    const [pos, setPos] = useState({ x: -200, y: -200 });
+    const [pos, setPos] = useState({ x: -300, y: -300 });
     const [burst, setBurst] = useState(false);
-
     useEffect(() => {
         const move = (e) => setPos({ x: e.clientX, y: e.clientY });
-        const click = () => {
-            setSize(s => Math.min(s + 14, 180));
-            setBurst(true);
-            setTimeout(() => setBurst(false), 200);
-        };
+        const click = () => { setSize(s => Math.min(s + 16, 200)); setBurst(true); setTimeout(() => setBurst(false), 180); };
         window.addEventListener("mousemove", move);
         window.addEventListener("click", click);
         return () => { window.removeEventListener("mousemove", move); window.removeEventListener("click", click); };
     }, []);
-
     return (
         <div style={{
-            position: "fixed",
-            left: pos.x - size / 2,
-            top: pos.y - size / 2,
-            width: size,
-            height: size,
-            borderRadius: "50%",
+            position: "fixed", left: pos.x - size / 2, top: pos.y - size / 2,
+            width: size, height: size, borderRadius: "50%",
             border: `${Math.max(2, size / 10)}px solid #e63946`,
-            background: burst ? "rgba(230,57,70,0.12)" : "transparent",
-            pointerEvents: "none",
-            zIndex: 999999,
-            transition: "width 0.35s, height 0.35s, left 0.04s, top 0.04s",
+            background: burst ? "rgba(230,57,70,0.15)" : "transparent",
+            pointerEvents: "none", zIndex: 9999999,
+            transition: "width 0.4s, height 0.4s, left 0.04s, top 0.04s",
         }} />
     );
 };
 
-/* ══════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════
    TSUNAMI WAVE
-══════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════════ */
 const TsunamiWave = ({ onComplete }) => (
     <motion.div
-        initial={{ x: "-110%" }}
-        animate={{ x: "110%" }}
-        transition={{ duration: 1.9, ease: [0.4, 0, 0.2, 1] }}
+        initial={{ x: "-110vw" }} animate={{ x: "110vw" }}
+        transition={{ duration: 2.1, ease: [0.3, 0, 0.15, 1] }}
         onAnimationComplete={onComplete}
         style={{
-            position: "fixed", inset: 0, zIndex: 999998,
-            background: "linear-gradient(180deg,rgba(20,70,150,0.93) 0%,rgba(8,35,90,0.97) 65%,rgba(4,18,55,1) 100%)",
-            pointerEvents: "none",
+            position: "fixed", inset: 0, zIndex: 9999990, pointerEvents: "none",
+            background: "linear-gradient(185deg,rgba(10,55,140,0.95) 0%,rgba(5,28,80,0.98) 60%,rgba(2,12,45,1) 100%)"
         }}
     >
-        <svg style={{ position: "absolute", right: -1, top: 0, height: "100%", width: 90 }} viewBox="0 0 90 800" preserveAspectRatio="none">
-            <path d="M90,0 Q0,200 90,400 Q180,600 90,800 L90,800 L90,0Z" fill="rgba(20,70,150,0.93)" />
+        <svg style={{ position: "absolute", right: -2, top: 0, height: "100%", width: 100 }} viewBox="0 0 100 900" preserveAspectRatio="none">
+            <path d="M100,0 Q10,225 100,450 Q190,675 100,900 L100,900 L100,0Z" fill="rgba(10,55,140,0.95)" />
         </svg>
-        <p style={{
-            color: "rgba(255,255,255,0.85)", fontFamily: "Georgia,serif",
-            fontSize: "1rem", letterSpacing: "0.04em",
-            position: "absolute", bottom: "28%", left: "30%",
-            fontStyle: "italic", userSelect: "none",
-        }}>
-            Rearranging everything. You're welcome.
-        </p>
+        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center" }}>
+            <p style={{ color: "rgba(255,255,255,0.9)", fontFamily: "Georgia,serif", fontSize: "1.3rem", fontStyle: "italic", letterSpacing: "0.05em" }}>
+                Rearranging everything.
+            </p>
+            <p style={{ color: "rgba(255,255,255,0.5)", fontFamily: "Georgia,serif", fontSize: "0.85rem", marginTop: 8, fontStyle: "italic" }}>
+                You're welcome.
+            </p>
+        </div>
     </motion.div>
 );
 
-/* ══════════════════════════════════════════════════
-   STEP 1 — DATE: every cell wiggles violently
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   ANNOYING POPUP — large, appears anywhere, must be dismissed
+══════════════════════════════════════════════════════════════ */
+const AnnoyPopup = ({ msg, onDismiss }) => {
+    const left = 10 + Math.random() * 50;
+    const top = 10 + Math.random() * 50;
+    return (
+        <motion.div
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            style={{
+                position: "fixed", left: `${left}%`, top: `${top}%`,
+                zIndex: 9999980, background: "white", borderRadius: 20,
+                padding: "2rem 2rem 1.5rem", maxWidth: 340, width: "90vw",
+                boxShadow: "0 24px 60px rgba(0,0,0,0.22)", border: "1px solid #ede8e8",
+                fontFamily: "'Nunito',-apple-system,sans-serif",
+            }}
+        >
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: "1.2rem" }}>
+                <AlertCircle size={22} style={{ color: "#e63946", flexShrink: 0, marginTop: 2 }} />
+                <p style={{ fontSize: "0.95rem", color: "#333", lineHeight: 1.6, margin: 0 }}>{msg}</p>
+            </div>
+            <button onClick={onDismiss} style={{ width: "100%", background: "#1a1a1a", color: "white", border: "none", borderRadius: 100, padding: "0.7rem", fontSize: "0.85rem", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                Acknowledged
+            </button>
+        </motion.div>
+    );
+};
+
+/* ══════════════════════════════════════════════════════════════
+   TIMER POPUP — large, centred over the modal card
+══════════════════════════════════════════════════════════════ */
+const TimerPopup = ({ onClose }) => {
+    const [t, setT] = useState(12);
+    const msgs = [
+        "Your reservation window closes in",
+        "This form expires in",
+        "Our patience runs out in",
+        "The kitchen stops taking bookings in",
+    ];
+    const [msg] = useState(() => msgs[Math.floor(Math.random() * msgs.length)]);
+    useEffect(() => {
+        const iv = setInterval(() => setT(n => { if (n <= 1) { onClose(); return 0; } return n - 1; }), 1000);
+        return () => clearInterval(iv);
+    }, []);
+
+    return (
+        /* Sits inside the same overlay as the wizard — centred on top of the card */
+        <motion.div
+            initial={{ scale: 0.55, opacity: 0, y: -20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.6, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 24 }}
+            style={{
+                position: "fixed",
+                /* horizontally centred, vertically centred with a slight upward bias */
+                left: "50%", top: "50%",
+                transform: "translate(-50%, -56%)",
+                zIndex: 9999988,
+                width: "min(420px, 92vw)",
+                background: t < 5 ? "#fff0f0" : "white",
+                border: `2px solid ${t < 5 ? "#e63946" : "#e0dada"}`,
+                borderRadius: 24,
+                padding: "2.5rem 2.25rem 2rem",
+                boxShadow: "0 28px 70px rgba(0,0,0,0.28)",
+                fontFamily: "'Nunito',-apple-system,sans-serif",
+                textAlign: "center",
+                transition: "background 0.3s, border-color 0.3s",
+            }}
+        >
+            {/* Big countdown number */}
+            <motion.div
+                key={t}
+                initial={{ scale: 1.35, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.25 }}
+                style={{
+                    fontSize: "5rem", fontFamily: "Georgia,serif", fontWeight: 700,
+                    color: t < 5 ? "#e63946" : "#1a1a1a", lineHeight: 1,
+                    marginBottom: "0.6rem",
+                }}
+            >
+                {t}
+            </motion.div>
+
+            {/* Thin progress drain bar */}
+            <div style={{ height: 3, background: "#f0ecea", borderRadius: 2, overflow: "hidden", marginBottom: "1.1rem" }}>
+                <motion.div
+                    animate={{ width: `${(t / 12) * 100}%` }}
+                    transition={{ duration: 0.9, ease: "linear" }}
+                    style={{ height: "100%", background: t < 5 ? "#e63946" : "#1a1a1a", borderRadius: 2 }}
+                />
+            </div>
+
+            <p style={{ fontSize: "0.92rem", color: "#666", margin: "0 0 1.6rem", fontStyle: "italic", lineHeight: 1.5 }}>
+                {msg}
+            </p>
+
+            <button
+                onClick={onClose}
+                style={{
+                    background: "#e63946", color: "white", border: "none", borderRadius: 100,
+                    padding: "0.8rem 2rem", fontSize: "0.88rem", cursor: "pointer",
+                    fontFamily: "inherit", fontWeight: 700, width: "100%",
+                    boxShadow: "0 4px 16px rgba(230,57,70,0.25)",
+                }}
+            >
+                I understand. Please stop.
+            </button>
+        </motion.div>
+    );
+};
+
+/* ══════════════════════════════════════════════════════════════
+   MINI SNAKE GAME — shown when user tries to close
+══════════════════════════════════════════════════════════════ */
+const COLS = 12; const ROWS = 10; const CELL = 26;
+const dir = { UP: [0, -1], DOWN: [0, 1], LEFT: [-1, 0], RIGHT: [1, 0] };
+
+const SnakeGame = ({ onComplete }) => {
+    const [snake, setSnake] = useState([[6, 5], [5, 5], [4, 5]]);
+    const [food, setFood] = useState([9, 3]);
+    const [d, setD] = useState("RIGHT");
+    const [score, setScore] = useState(0);
+    const [dead, setDead] = useState(false);
+    const [won, setWon] = useState(false);
+    const dRef = useRef("RIGHT");
+
+    const placeFood = (s) => {
+        let f;
+        do { f = [Math.floor(Math.random() * COLS), Math.floor(Math.random() * ROWS)]; }
+        while (s.some(([x, y]) => x === f[0] && y === f[1]));
+        return f;
+    };
+
+    useEffect(() => {
+        const onKey = (e) => {
+            const map = { ArrowUp: "UP", ArrowDown: "DOWN", ArrowLeft: "LEFT", ArrowRight: "RIGHT" };
+            if (map[e.key]) { e.preventDefault(); dRef.current = map[e.key]; setD(map[e.key]); }
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, []);
+
+    useEffect(() => {
+        if (dead || won) return;
+        const iv = setInterval(() => {
+            setSnake(prev => {
+                const [dx, dy] = dir[dRef.current];
+                const head = [prev[0][0] + dx, prev[0][1] + dy];
+                if (head[0] < 0 || head[0] >= COLS || head[1] < 0 || head[1] >= ROWS) { setDead(true); return prev; }
+                if (prev.some(([x, y]) => x === head[0] && y === head[1])) { setDead(true); return prev; }
+                let next = [head, ...prev];
+                if (head[0] === food[0] && head[1] === food[1]) {
+                    setScore(sc => { const ns = sc + 1; if (ns >= 3) { setTimeout(() => setWon(true), 300); } return ns; });
+                    setFood(placeFood(next));
+                } else { next = next.slice(0, -1); }
+                return next;
+            });
+        }, 140);
+        return () => clearInterval(iv);
+    }, [dead, won, food]);
+
+    const reset = () => { setSnake([[6, 5], [5, 5], [4, 5]]); setD("RIGHT"); dRef.current = "RIGHT"; setScore(0); setDead(false); setWon(false); setFood([9, 3]); };
+    const btnDir = (direction) => { dRef.current = direction; setD(direction); };
+
+    return (
+        <div style={{ textAlign: "center", fontFamily: "'Nunito',-apple-system,sans-serif" }}>
+            <h3 style={{ fontFamily: "Georgia,serif", fontSize: "1.3rem", margin: "0 0 0.4rem", color: "#1a1a1a" }}>
+                Not so fast.
+            </h3>
+            <p style={{ color: "#888", fontSize: "0.8rem", marginBottom: "1rem", fontStyle: "italic" }}>
+                Collect 3 items to unlock the close button. Score: {score}/3
+            </p>
+
+            {/* Board */}
+            <div style={{ display: "inline-block", border: "2px solid #e8e2e2", borderRadius: 10, overflow: "hidden", background: "#faf8f8", marginBottom: "0.75rem" }}>
+                {Array(ROWS).fill(null).map((_, row) => (
+                    <div key={row} style={{ display: "flex" }}>
+                        {Array(COLS).fill(null).map((_, col) => {
+                            const isHead = snake[0][0] === col && snake[0][1] === row;
+                            const isBody = snake.slice(1).some(([x, y]) => x === col && y === row);
+                            const isFood = food[0] === col && food[1] === row;
+                            return (
+                                <div key={col} style={{
+                                    width: CELL, height: CELL,
+                                    background: isHead ? "#e63946" : isBody ? "#f5b3b8" : isFood ? "#1a1a1a" : "transparent",
+                                    borderRadius: isHead ? 5 : isBody ? 3 : isFood ? "50%" : 0,
+                                    transition: "background 0.05s",
+                                }} />
+                            );
+                        })}
+                    </div>
+                ))}
+            </div>
+
+            {/* Mobile D-pad */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,40px)", gap: 4, margin: "0 auto 1rem", width: "fit-content" }}>
+                {[["", "UP", ""],
+                ["LEFT", "DOWN", "RIGHT"]].flat().map((k, i) => k ? (
+                    <button key={i} onClick={() => btnDir(k)}
+                        style={{ width: 40, height: 40, borderRadius: 8, border: "1px solid #e8e2e2", background: "white", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700, color: "#555", fontFamily: "inherit" }}>
+                        {k === "UP" ? "↑" : k === "DOWN" ? "↓" : k === "LEFT" ? "←" : "→"}
+                    </button>
+                ) : <div key={i} />)}
+            </div>
+
+            {won && (
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring" }}>
+                    <p style={{ color: "#2d9e6a", fontFamily: "Georgia,serif", fontSize: "1rem", marginBottom: "0.75rem" }}>
+                        Fine. You earned it.
+                    </p>
+                    <button onClick={onComplete} style={{ background: "#1a1a1a", color: "white", border: "none", borderRadius: 100, padding: "0.65rem 2rem", fontSize: "0.85rem", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                        Close Now
+                    </button>
+                </motion.div>
+            )}
+            {dead && !won && (
+                <div>
+                    <p style={{ color: "#e63946", fontSize: "0.82rem", fontStyle: "italic", marginBottom: "0.5rem" }}>You ran into something. Classic.</p>
+                    <button onClick={reset} style={{ background: "#e63946", color: "white", border: "none", borderRadius: 100, padding: "0.6rem 1.5rem", fontSize: "0.82rem", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Try Again</button>
+                </div>
+            )}
+            {!won && !dead && (
+                <p style={{ fontSize: "0.7rem", color: "#bbb", fontStyle: "italic" }}>Use arrow keys or the buttons above</p>
+            )}
+        </div>
+    );
+};
+
+/* ══════════════════════════════════════════════════════════════
+   STEP 1 — DATE: violently wiggling cells + infinite load
+══════════════════════════════════════════════════════════════ */
 const WiggleCell = ({ day, isPast, isBlocked, isSelected, onClick }) => {
     const phase = useRef(Math.random() * Math.PI * 2);
-    const freq = useRef(10 + Math.random() * 8);
-    const amp = useRef(isBlocked ? 6 : isPast ? 2 : 5);
+    const freq = useRef(9 + Math.random() * 9);
+    const amp = useRef(isPast ? 1.5 : isBlocked ? 7 : 5);
     const [rot, setRot] = useState(0);
     const [tx, setTx] = useState(0);
 
     useEffect(() => {
-        let frame;
+        let f;
         const tick = (t) => {
             setRot(Math.sin(t / (1000 / freq.current) + phase.current) * amp.current);
-            setTx(Math.cos(t / (850 / freq.current) + phase.current) * (amp.current * 0.45));
-            frame = requestAnimationFrame(tick);
+            setTx(Math.cos(t / (850 / freq.current) + phase.current) * (amp.current * 0.4));
+            f = requestAnimationFrame(tick);
         };
-        frame = requestAnimationFrame(tick);
-        return () => cancelAnimationFrame(frame);
+        f = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(f);
     }, []);
 
     return (
-        <button
-            onClick={onClick}
-            style={{
-                padding: "8px 0", borderRadius: 8,
-                border: isSelected ? "2px solid #e63946" : "1px solid transparent",
-                background: isSelected ? "#e63946" : isPast || isBlocked ? "#f0ecea" : "white",
-                color: isSelected ? "white" : isPast || isBlocked ? "#ccc" : "#1a1a1a",
-                fontSize: "0.82rem", cursor: isPast ? "not-allowed" : isBlocked ? "wait" : "pointer",
-                fontWeight: isSelected ? 600 : 400,
-                transform: `rotate(${rot}deg) translateX(${tx}px)`,
-                display: "inline-block",
-            }}
-        >
-            {day}
-        </button>
+        <button onClick={onClick} style={{
+            padding: "7px 0", borderRadius: 8,
+            border: isSelected ? "2px solid #e63946" : "1px solid transparent",
+            background: isSelected ? "#e63946" : isPast || isBlocked ? "#f0ecea" : "white",
+            color: isSelected ? "white" : isPast || isBlocked ? "#ccc" : "#1a1a1a",
+            fontSize: "0.8rem", cursor: isPast ? "not-allowed" : isBlocked ? "wait" : "pointer",
+            fontWeight: isSelected ? 600 : 400,
+            transform: `rotate(${rot}deg) translateX(${tx}px)`,
+            display: "inline-block", fontFamily: "inherit",
+        }}>{day}</button>
     );
 };
 
 const StepDate = ({ value, onChange }) => {
-    const [blockedDates, setBlockedDates] = useState([]);
+    const [blocked, setBlocked] = useState([]);
     const [tooltip, setTooltip] = useState(null);
-    const [infiniteLoad, setInfiniteLoad] = useState(false);
-    const [loadMsgIdx, setLoadMsgIdx] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [loadIdx, setLoadIdx] = useState(0);
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const [viewMonth, setViewMonth] = useState(today.getMonth());
-    const [viewYear, setViewYear] = useState(today.getFullYear());
-
-    const loadMsgs = [
-        "Checking availability…", "Still checking…", "Contacting calendar servers…",
-        "Almost there…", "Re-verifying from scratch…", "Our server sneezed. Retrying…",
-        "Loading complete. Reloading for safety…",
-    ];
+    const [vm, setVm] = useState(today.getMonth());
+    const [vy, setVy] = useState(today.getFullYear());
+    const loadMsgs = ["Checking availability…", "Still checking…", "Contacting calendar servers…", "Almost there…", "Re-verifying from scratch…", "Our server sneezed. Retrying…", "Loading complete. Reloading for safety…"];
 
     useEffect(() => {
         const pick = () => {
             const b = new Set();
-            while (b.size < 8) {
-                const d = new Date(today);
-                d.setDate(today.getDate() + Math.floor(Math.random() * 28) + 1);
-                b.add(d.toISOString().split("T")[0]);
-            }
-            setBlockedDates([...b]);
+            while (b.size < 8) { const d = new Date(today); d.setDate(today.getDate() + Math.floor(Math.random() * 28) + 1); b.add(d.toISOString().split("T")[0]); }
+            setBlocked([...b]);
         };
-        pick();
-        const iv = setInterval(pick, 6000);
-        return () => clearInterval(iv);
+        pick(); const iv = setInterval(pick, 5500); return () => clearInterval(iv);
     }, []);
 
     useEffect(() => {
-        if (!infiniteLoad) return;
-        const iv = setInterval(() => setLoadMsgIdx(m => (m + 1) % loadMsgs.length), 2200);
+        if (!loading) return;
+        const iv = setInterval(() => setLoadIdx(m => (m + 1) % loadMsgs.length), 2000);
         return () => clearInterval(iv);
-    }, [infiniteLoad]);
+    }, [loading]);
 
-    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+    const dim = new Date(vy, vm + 1, 0).getDate();
+    const fd = new Date(vy, vm, 1).getDay();
 
-    const handleDayClick = (day) => {
-        const d = new Date(viewYear, viewMonth, day);
-        const iso = d.toISOString().split("T")[0];
+    const clickDay = (day) => {
+        const d = new Date(vy, vm, day); const iso = d.toISOString().split("T")[0];
         if (d < today) { setTooltip("That's in the past. Even we can't undo time."); setTimeout(() => setTooltip(null), 2500); return; }
-        if (blockedDates.includes(iso)) {
-            setInfiniteLoad(true);
-            setTimeout(() => {
-                setInfiniteLoad(false);
-                setTooltip("Still fully booked. We checked 7 times.");
-                setTimeout(() => setTooltip(null), 3000);
-            }, 7000);
+        if (blocked.includes(iso)) {
+            setLoading(true);
+            setTimeout(() => { setLoading(false); setTooltip("Still fully booked. We checked 7 times."); setTimeout(() => setTooltip(null), 3000); }, 7000);
             return;
         }
         onChange(iso);
     };
 
-    if (infiniteLoad) return (
-        <div style={{ textAlign: "center", padding: "2.5rem 0" }}>
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }} style={{ display: "inline-block", marginBottom: "1.5rem" }}>
+    if (loading) return (
+        <div style={{ textAlign: "center", padding: "2rem 0" }}>
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.1, repeat: Infinity, ease: "linear" }} style={{ display: "inline-block", marginBottom: "1.25rem" }}>
                 <Loader2 size={36} style={{ color: "#e63946" }} />
             </motion.div>
             <AnimatePresence mode="wait">
-                <motion.p key={loadMsgIdx} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                    style={{ fontFamily: "Georgia,serif", fontSize: "1rem", color: "#555" }}>
-                    {loadMsgs[loadMsgIdx]}
+                <motion.p key={loadIdx} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                    style={{ fontFamily: "Georgia,serif", fontSize: "0.95rem", color: "#555", margin: "0 0 1.5rem" }}>
+                    {loadMsgs[loadIdx]}
                 </motion.p>
             </AnimatePresence>
-            <div style={{ height: 3, background: "#f0ecea", borderRadius: 2, overflow: "hidden", maxWidth: 220, margin: "1.5rem auto 0" }}>
-                <motion.div animate={{ x: ["-100%", "200%"] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            <div style={{ height: 3, background: "#f0ecea", borderRadius: 2, overflow: "hidden", maxWidth: 200, margin: "0 auto 0.75rem" }}>
+                <motion.div animate={{ x: ["-100%", "200%"] }} transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
                     style={{ width: "55%", height: "100%", background: "#e63946", borderRadius: 2 }} />
             </div>
-            <p style={{ fontSize: "0.7rem", color: "#bbb", marginTop: "0.75rem", fontStyle: "italic" }}>
-                This is not a progress bar. It's moral support.
-            </p>
+            <p style={{ fontSize: "0.68rem", color: "#bbb", fontStyle: "italic" }}>Not a progress bar. Moral support.</p>
         </div>
     );
 
     return (
         <div>
-            <p style={{ color: "#888", fontSize: "0.78rem", marginBottom: "0.75rem", fontStyle: "italic" }}>
-                Availability updates every few seconds. The calendar is anxious.
-            </p>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
-                <button onClick={() => { if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); } else setViewMonth(m => m - 1); }} style={navBtnStyle}><ChevronLeft size={16} /></button>
-                <span style={{ fontFamily: "Georgia, serif", fontWeight: 500, fontSize: "1rem" }}>{months[viewMonth]} {viewYear}</span>
-                <button onClick={() => { if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); } else setViewMonth(m => m + 1); }} style={navBtnStyle}><ChevronRight size={16} /></button>
+            <p style={{ color: "#888", fontSize: "0.76rem", marginBottom: "0.75rem", fontStyle: "italic" }}>Availability shifts every few seconds. The calendar is anxious.</p>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+                <button onClick={() => vm === 0 ? (setVm(11), setVy(y => y - 1)) : setVm(m => m - 1)} style={navBtnStyle}><ChevronLeft size={15} /></button>
+                <span style={{ fontFamily: "Georgia,serif", fontWeight: 500 }}>{months[vm]} {vy}</span>
+                <button onClick={() => vm === 11 ? (setVm(0), setVy(y => y + 1)) : setVm(m => m + 1)} style={navBtnStyle}><ChevronRight size={15} /></button>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "4px", marginBottom: "6px" }}>
-                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
-                    <div key={d} style={{ textAlign: "center", fontSize: "0.7rem", color: "#999", fontWeight: 500, padding: "4px 0" }}>{d}</div>
-                ))}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3, marginBottom: 5 }}>
+                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => <div key={d} style={{ textAlign: "center", fontSize: "0.68rem", color: "#bbb", padding: "3px 0" }}>{d}</div>)}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "4px" }}>
-                {Array(firstDay).fill(null).map((_, i) => <div key={"e" + i} />)}
-                {Array(daysInMonth).fill(null).map((_, i) => {
-                    const day = i + 1;
-                    const d = new Date(viewYear, viewMonth, day);
-                    const iso = d.toISOString().split("T")[0];
-                    return (
-                        <WiggleCell key={iso} day={day} isPast={d < today} isBlocked={blockedDates.includes(iso)} isSelected={value === iso} onClick={() => handleDayClick(day)} />
-                    );
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3 }}>
+                {Array(fd).fill(null).map((_, i) => <div key={"e" + i} />)}
+                {Array(dim).fill(null).map((_, i) => {
+                    const day = i + 1; const d = new Date(vy, vm, day); const iso = d.toISOString().split("T")[0];
+                    return <WiggleCell key={iso} day={day} isPast={d < today} isBlocked={blocked.includes(iso)} isSelected={value === iso} onClick={() => clickDay(day)} />;
                 })}
             </div>
             <AnimatePresence>
                 {tooltip && (
-                    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                        style={{ marginTop: "0.75rem", background: "#fff3f3", border: "1px solid #f5c5c5", borderRadius: 10, padding: "0.6rem 1rem", fontSize: "0.82rem", color: "#b0272c" }}>
-                        <AlertCircle size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
-                        {tooltip}
+                    <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                        style={{ marginTop: "0.75rem", background: "#fff3f3", border: "1px solid #f5c5c5", borderRadius: 10, padding: "0.55rem 0.9rem", fontSize: "0.8rem", color: "#b0272c" }}>
+                        <AlertCircle size={13} style={{ display: "inline", marginRight: 5, verticalAlign: -2 }} />{tooltip}
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -227,105 +413,78 @@ const StepDate = ({ value, onChange }) => {
     );
 };
 
-/* ══════════════════════════════════════════════════
-   STEP 2 — TIME: slots shrink + drift + vanish
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   STEP 2 — TIME: slots shrink + drift + vanish over time
+══════════════════════════════════════════════════════════════ */
 const ALL_TIMES = ["12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM", "2:00 PM", "7:00 PM", "7:30 PM", "8:00 PM", "8:30 PM", "9:00 PM"];
 
 const StepTime = ({ value, onChange }) => {
     const [slots, setSlots] = useState(() => ALL_TIMES.map(t => ({ time: t, scale: 1, x: 0, y: 0, gone: false })));
-    const [popupMsg, setPopupMsg] = useState(null);
+    const [note, setNote] = useState(null);
 
     useEffect(() => {
-        const shrinkIv = setInterval(() => {
+        const s1 = setInterval(() => {
             setSlots(prev => {
-                const available = prev.filter(s => !s.gone && s.time !== value);
-                if (!available.length) return prev;
-                const victim = available[Math.floor(Math.random() * available.length)];
-                return prev.map(s => s.time === victim.time
-                    ? { ...s, scale: Math.max(0.52, s.scale - 0.14), x: (Math.random() - 0.5) * 12, y: (Math.random() - 0.5) * 8 }
-                    : s
-                );
+                const avail = prev.filter(s => !s.gone && s.time !== value);
+                if (!avail.length) return prev;
+                const v = avail[Math.floor(Math.random() * avail.length)];
+                return prev.map(s => s.time === v.time ? { ...s, scale: Math.max(0.5, s.scale - 0.13), x: (Math.random() - .5) * 14, y: (Math.random() - .5) * 8 } : s);
             });
-        }, 2800);
-        const vanishIv = setInterval(() => {
+        }, 2600);
+        const s2 = setInterval(() => {
             setSlots(prev => {
                 const tiny = prev.filter(s => !s.gone && s.scale < 0.68 && s.time !== value);
                 if (!tiny.length) return prev;
-                const victim = tiny[Math.floor(Math.random() * tiny.length)];
-                setPopupMsg(`${victim.time} just left. It looked tired.`);
-                setTimeout(() => setPopupMsg(null), 2800);
-                return prev.map(s => s.time === victim.time ? { ...s, gone: true } : s);
+                const v = tiny[Math.floor(Math.random() * tiny.length)];
+                setNote(`${v.time} just left. It looked tired.`);
+                setTimeout(() => setNote(null), 2500);
+                return prev.map(s => s.time === v.time ? { ...s, gone: true } : s);
             });
-        }, 7000);
-        return () => { clearInterval(shrinkIv); clearInterval(vanishIv); };
+        }, 6500);
+        return () => { clearInterval(s1); clearInterval(s2); };
     }, [value]);
 
     return (
         <div>
-            <p style={{ color: "#888", fontSize: "0.78rem", marginBottom: "1rem", fontStyle: "italic" }}>
-                Slots are actively disappearing. This is intentional.
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
+            <p style={{ color: "#888", fontSize: "0.76rem", marginBottom: "1rem", fontStyle: "italic" }}>Slots are disappearing. Hurry.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 }}>
                 {slots.map(s => {
-                    const isSelected = value === s.time;
-                    if (s.gone && !isSelected) return (
-                        <div key={s.time} style={{ padding: "0.75rem", borderRadius: 12, background: "#fafafa", border: "1px dashed #eee", fontSize: "0.72rem", color: "#ddd", textDecoration: "line-through", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            {s.time}
-                        </div>
+                    const sel = value === s.time;
+                    if (s.gone && !sel) return (
+                        <div key={s.time} style={{ padding: "0.7rem", borderRadius: 12, background: "#fafafa", border: "1px dashed #eee", fontSize: "0.7rem", color: "#ddd", textDecoration: "line-through", display: "flex", alignItems: "center", justifyContent: "center" }}>{s.time}</div>
                     );
                     return (
                         <motion.button key={s.time} onClick={() => !s.gone && onChange(s.time)}
-                            animate={{ scale: isSelected ? 1 : s.scale, x: s.x, y: s.y }}
-                            transition={{ type: "spring", stiffness: 200, damping: 18 }}
-                            style={{
-                                padding: "0.75rem 0.5rem", borderRadius: 12,
-                                border: isSelected ? "2px solid #e63946" : `1px solid ${s.scale < 0.75 ? "#f5c5c5" : "#e8e2e2"}`,
-                                background: isSelected ? "#e63946" : "white",
-                                color: isSelected ? "white" : s.scale < 0.75 ? "#b0272c" : "#1a1a1a",
-                                fontSize: `${Math.max(0.62, 0.88 * s.scale)}rem`,
-                                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between",
-                                fontWeight: isSelected ? 600 : 400, fontFamily: "inherit",
-                            }}>
+                            animate={{ scale: sel ? 1 : s.scale, x: s.x, y: s.y }} transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                            style={{ padding: "0.7rem 0.5rem", borderRadius: 12, border: sel ? "2px solid #e63946" : `1px solid ${s.scale < 0.75 ? "#f5c5c5" : "#e8e2e2"}`, background: sel ? "#e63946" : "white", color: sel ? "white" : s.scale < 0.75 ? "#b0272c" : "#1a1a1a", fontSize: `${Math.max(0.6, 0.86 * s.scale)}rem`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", fontWeight: sel ? 600 : 400, fontFamily: "inherit" }}>
                             <span style={{ fontSize: "0.7em", opacity: 0.35 }}>◷</span>
                             <span>{s.time}</span>
-                            {isSelected ? <CheckCircle2 size={12} /> : s.scale < 0.78 ? <span style={{ fontSize: "0.58rem", color: "#e63946" }}>Fading</span> : <span />}
+                            {sel ? <CheckCircle2 size={12} /> : s.scale < 0.78 ? <span style={{ fontSize: "0.58rem", color: "#e63946" }}>Fading</span> : <span />}
                         </motion.button>
                     );
                 })}
             </div>
             <AnimatePresence>
-                {popupMsg && (
-                    <motion.p initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                        style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "#b0272c", fontStyle: "italic" }}>
-                        {popupMsg}
-                    </motion.p>
-                )}
+                {note && <motion.p initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ marginTop: "0.65rem", fontSize: "0.76rem", color: "#b0272c", fontStyle: "italic" }}>{note}</motion.p>}
             </AnimatePresence>
         </div>
     );
 };
 
-/* ══════════════════════════════════════════════════
-   STEP 3 — GUESTS: slider with obstacles
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   STEP 3 — GUESTS: slider blocked by obstacles
+══════════════════════════════════════════════════════════════ */
 const StepGuests = ({ value, onChange }) => {
     const [warning, setWarning] = useState(null);
     const [obstacle, setObstacle] = useState(null);
     const [locked, setLocked] = useState(false);
-    const notes = {
-        1: "One person. The table will be judged.", 2: "Two. We'll seat you near the kitchen.",
-        3: "Three is an odd number. Literally.", 4: "Four. Our computers can handle four.",
-        5: "Five? We need to find five chairs first.", 6: "Six. This is getting complicated.",
-        7: "Seven. Are you sure? Count again.", 8: "Eight. We will call you. Or not.",
-    };
+    const notes = { 1: "One person. The table will be judged.", 2: "Two. We'll seat you near the kitchen.", 3: "Three is an odd number. Literally.", 4: "Four. Our computers can handle four.", 5: "Five? We need to find five chairs first.", 6: "Six. This is getting complicated.", 7: "Seven. Are you sure? Count again.", 8: "Eight. We will call you. Or not." };
 
     useEffect(() => {
-        const obstacles = ["Wet floor", "Staff crossing", "Menu trolley", "Chef passing", "Table being set", "Sommelier incident"];
+        const obs = ["Wet floor", "Staff crossing", "Menu trolley", "Chef passing", "Table being set", "Sommelier incident"];
         const iv = setInterval(() => {
-            const lbl = obstacles[Math.floor(Math.random() * obstacles.length)];
-            setObstacle({ label: lbl, x: 15 + Math.random() * 70 });
-            setLocked(true);
+            const lbl = obs[Math.floor(Math.random() * obs.length)];
+            setObstacle({ label: lbl, x: 15 + Math.random() * 70 }); setLocked(true);
             setWarning(`Slider blocked: ${lbl}. Please wait.`);
             setTimeout(() => { setObstacle(null); setLocked(false); setWarning(null); }, 3500);
         }, 5500);
@@ -335,11 +494,7 @@ const StepGuests = ({ value, onChange }) => {
     const handleChange = (e) => {
         if (locked) { setWarning("The slider is currently indisposed."); return; }
         let v = parseInt(e.target.value);
-        if (Math.random() < 0.35 && v > 1) {
-            v = v - 1;
-            setWarning("The slider had a moment of self-doubt.");
-            setTimeout(() => setWarning(null), 2500);
-        }
+        if (Math.random() < 0.35 && v > 1) { v--; setWarning("The slider had a moment of self-doubt."); setTimeout(() => setWarning(null), 2500); }
         onChange(v);
     };
 
@@ -347,115 +502,137 @@ const StepGuests = ({ value, onChange }) => {
         <div>
             <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
                 <motion.div key={value} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                    style={{ fontSize: "3.5rem", fontFamily: "Georgia, serif", fontWeight: 700, color: "#e63946", lineHeight: 1 }}>
-                    {value}
-                </motion.div>
-                <p style={{ fontSize: "0.8rem", color: "#888", marginTop: 4 }}>guests</p>
+                    style={{ fontSize: "3.5rem", fontFamily: "Georgia,serif", fontWeight: 700, color: "#e63946", lineHeight: 1 }}>{value}</motion.div>
+                <p style={{ fontSize: "0.78rem", color: "#888", marginTop: 4 }}>guests</p>
             </div>
             <div style={{ position: "relative", marginBottom: "0.5rem" }}>
                 <input type="range" min={1} max={8} value={value} onChange={handleChange}
-                    style={{ width: "100%", accentColor: "#e63946", cursor: locked ? "not-allowed" : "pointer", opacity: locked ? 0.45 : 1 }} />
+                    style={{ width: "100%", accentColor: "#e63946", cursor: locked ? "not-allowed" : "pointer", opacity: locked ? 0.4 : 1 }} />
                 <AnimatePresence>
                     {obstacle && (
                         <motion.div initial={{ opacity: 0, scaleY: 0 }} animate={{ opacity: 1, scaleY: 1 }} exit={{ opacity: 0 }}
-                            style={{
-                                position: "absolute", top: "50%", left: `${obstacle.x}%`,
-                                transform: "translate(-50%, -50%)",
-                                background: "#1a1a1a", color: "white",
-                                fontSize: "0.62rem", padding: "3px 8px", borderRadius: 100,
-                                whiteSpace: "nowrap", pointerEvents: "none",
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-                            }}>
+                            style={{ position: "absolute", top: "50%", left: `${obstacle.x}%`, transform: "translate(-50%,-50%)", background: "#1a1a1a", color: "white", fontSize: "0.6rem", padding: "3px 8px", borderRadius: 100, whiteSpace: "nowrap", pointerEvents: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
                             {obstacle.label}
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", color: "#aaa", marginBottom: "1.25rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.68rem", color: "#aaa", marginBottom: "1.2rem" }}>
                 {[1, 2, 3, 4, 5, 6, 7, 8].map(n => <span key={n} style={{ color: n === value ? "#e63946" : "#ccc", fontWeight: n === value ? 700 : 400 }}>{n}</span>)}
             </div>
             <AnimatePresence mode="wait">
-                <motion.div key={value} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                    style={{ background: "white", border: "1px solid #ede8e8", borderRadius: 12, padding: "0.75rem 1rem", fontSize: "0.82rem", color: "#555", fontStyle: "italic" }}>
+                <motion.div key={value} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }}
+                    style={{ background: "white", border: "1px solid #ede8e8", borderRadius: 12, padding: "0.7rem 1rem", fontSize: "0.8rem", color: "#555", fontStyle: "italic" }}>
                     {notes[value]}
                 </motion.div>
             </AnimatePresence>
             {warning && (
                 <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "#b0272c" }}>
-                    <AlertCircle size={12} style={{ display: "inline", marginRight: 4, verticalAlign: -1 }} />
-                    {warning}
+                    style={{ marginTop: "0.7rem", fontSize: "0.76rem", color: "#b0272c" }}>
+                    <AlertCircle size={12} style={{ display: "inline", marginRight: 4, verticalAlign: -1 }} />{warning}
                 </motion.p>
             )}
         </div>
     );
 };
 
-/* ══════════════════════════════════════════════════
-   STEP 4 — DETAILS: appending placeholders + dialpad
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   STEP 4 — DETAILS: appending placeholders + collapsible dialpad
+══════════════════════════════════════════════════════════════ */
 const NAME_PH = "Your full legal name as it appears on government-issued ID";
 const EMAIL_PH = "youremail@example.com (we will not spam. much.)";
 const NOTES_PH = "Special requests, dietary restrictions, unreasonable expectations, life stories…";
 
 const AppendInput = ({ placeholder, value, onChange, asTextarea = false }) => (
     <div style={{ position: "relative" }}>
-        {asTextarea ? (
-            <textarea value={value} onChange={e => onChange(e.target.value)} rows={4}
-                style={{ ...appendBase, resize: "none", minHeight: 88, fontFamily: "inherit" }} placeholder="" />
-        ) : (
-            <input value={value} onChange={e => onChange(e.target.value)}
-                style={appendBase} placeholder="" />
-        )}
-        <div style={{
-            position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-            padding: "0.65rem 0.9rem", fontSize: "0.88rem", pointerEvents: "none",
-            display: "flex", alignItems: asTextarea ? "flex-start" : "center",
-            overflow: "hidden", whiteSpace: asTextarea ? "pre-wrap" : "nowrap",
-            wordBreak: "break-word",
-        }}>
+        {asTextarea
+            ? <textarea value={value} onChange={e => onChange(e.target.value)} rows={4} style={{ ...appendBase, resize: "none", minHeight: 88, fontFamily: "inherit" }} placeholder="" />
+            : <input value={value} onChange={e => onChange(e.target.value)} style={appendBase} placeholder="" />
+        }
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, padding: "0.62rem 0.9rem", fontSize: "0.88rem", pointerEvents: "none", display: "flex", alignItems: asTextarea ? "flex-start" : "center", overflow: "hidden", whiteSpace: asTextarea ? "pre-wrap" : "nowrap" }}>
             <span style={{ color: "transparent", whiteSpace: "pre" }}>{value}</span>
             <span style={{ color: "#c0b8b8", fontStyle: "italic" }}>{placeholder.slice(value.length)}</span>
         </div>
     </div>
 );
 
+/* Dialpad — hidden, must open each time, tiny buttons, wrong layout */
 const Dialpad = ({ value, onChange }) => {
-    const keys = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], ["*", "0", "#"]];
+    const [open, setOpen] = useState(false);
+    // Shuffled key layout — every time you open it shuffles
+    const [layout, setLayout] = useState(["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"]);
+
+    const openPad = () => {
+        // Shuffle every time it opens
+        const shuffled = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"].sort(() => Math.random() - 0.5);
+        setLayout(shuffled);
+        setOpen(true);
+    };
+
     const press = (k) => {
-        if (k === "*") return;
+        if (k === "*") { setOpen(false); return; } // * closes the pad
         if (k === "#") { onChange(value.slice(0, -1)); return; }
         if (value.length < 13) onChange(value + k);
+        // Close pad after each digit — user must reopen for every digit
+        setOpen(false);
     };
+
     return (
         <div>
-            <div style={{ background: "white", border: "1px solid #e8e2e2", borderRadius: 12, padding: "0.7rem 1rem", fontFamily: "Georgia,serif", letterSpacing: "0.2em", fontSize: "1.1rem", color: "#1a1a1a", marginBottom: "0.5rem", minHeight: 44, display: "flex", alignItems: "center" }}>
-                {value || <span style={{ color: "#ccc", fontSize: "0.8rem", fontFamily: "inherit", fontStyle: "italic", letterSpacing: 0 }}>Use the pad below</span>}
+            {/* Display */}
+            <div style={{ background: "white", border: "1px solid #e8e2e2", borderRadius: 12, padding: "0.7rem 1rem", marginBottom: "0.5rem", minHeight: 44, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <span style={{ fontFamily: "Georgia,serif", letterSpacing: "0.2em", fontSize: "1rem", color: "#1a1a1a", flex: 1 }}>
+                    {value || <span style={{ color: "#ccc", fontSize: "0.78rem", fontFamily: "inherit", fontStyle: "italic", letterSpacing: 0 }}>Tap the button to enter each digit</span>}
+                </span>
+                <button onClick={() => value.length > 0 && onChange(value.slice(0, -1))}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "#bbb", padding: 4 }}>
+                    <Delete size={14} />
+                </button>
             </div>
-            <p style={{ fontSize: "0.68rem", color: "#aaa", marginBottom: "0.75rem", fontStyle: "italic" }}>
-                Keyboard disabled for security. (This was decided at 2am.)
+
+            <p style={{ fontSize: "0.68rem", color: "#aaa", marginBottom: "0.6rem", fontStyle: "italic" }}>
+                Keyboard is disabled. Open the pad for each digit. (* closes it.)
             </p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, maxWidth: 230, margin: "0 auto" }}>
-                {keys.flat().map((k, i) => (
-                    <motion.button key={i} whileTap={{ scale: 0.88 }} onClick={() => press(k)}
-                        style={{
-                            padding: "0.9rem 0", borderRadius: 12, border: "1px solid #e8e2e2",
-                            background: k === "*" ? "#fafafa" : k === "#" ? "#fff3f3" : "white",
-                            color: k === "*" ? "#ccc" : k === "#" ? "#e63946" : "#1a1a1a",
-                            fontSize: "1rem", fontWeight: 500, cursor: k === "*" ? "not-allowed" : "pointer",
-                            fontFamily: "Georgia,serif", display: "flex", alignItems: "center", justifyContent: "center",
-                        }}>
-                        {k === "#" ? <Delete size={15} /> : k}
-                    </motion.button>
-                ))}
-            </div>
+
+            <button onClick={openPad}
+                style={{ display: "flex", alignItems: "center", gap: 8, background: "white", border: "1px solid #e8e2e2", borderRadius: 12, padding: "0.6rem 1.1rem", fontSize: "0.82rem", cursor: "pointer", fontFamily: "inherit", color: "#555", width: "100%" }}>
+                <Phone size={14} style={{ color: "#e63946" }} />
+                Open Number Pad — Enter Digit {value.length + 1}
+            </button>
+
+            <AnimatePresence>
+                {open && (
+                    <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        style={{ marginTop: "0.75rem", background: "#f9f6f6", border: "1px solid #e8e2e2", borderRadius: 16, padding: "1rem", boxShadow: "0 8px 30px rgba(0,0,0,0.1)" }}>
+                        <p style={{ fontSize: "0.68rem", color: "#aaa", textAlign: "center", marginBottom: "0.75rem", fontStyle: "italic" }}>
+                            Layout shuffles every time. That's a feature.
+                        </p>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 }}>
+                            {layout.map((k, i) => (
+                                <motion.button key={i} whileTap={{ scale: 0.84 }} onClick={() => press(k)}
+                                    style={{
+                                        padding: "0.75rem 0", borderRadius: 10, border: "1px solid #e8e2e2",
+                                        background: k === "*" ? "#fff0f0" : k === "#" ? "#fff3f3" : "white",
+                                        color: k === "*" ? "#e63946" : k === "#" ? "#888" : "#1a1a1a",
+                                        fontSize: "0.95rem", fontWeight: 500, cursor: "pointer",
+                                        fontFamily: "Georgia,serif",
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                    }}>
+                                    {k === "*" ? <X size={14} /> : k === "#" ? <Delete size={14} /> : k}
+                                </motion.button>
+                            ))}
+                        </div>
+                        <p style={{ fontSize: "0.65rem", color: "#ccc", textAlign: "center", marginTop: "0.6rem", fontStyle: "italic" }}>* = close pad without entering</p>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
 
 const StepDetails = ({ value, onChange }) => {
     const [emailState, setEmailState] = useState("idle");
-    const [activeField, setActiveField] = useState("name");
+    const [active, setActive] = useState("name");
     const timerRef = useRef(null);
 
     const handleEmail = (v) => {
@@ -463,72 +640,57 @@ const StepDetails = ({ value, onChange }) => {
         clearTimeout(timerRef.current);
         if (v.includes("@") && v.includes(".")) {
             setEmailState("checking");
-            timerRef.current = setTimeout(() => {
-                setEmailState("wrong");
-                setTimeout(() => setEmailState("ok"), 3500);
-            }, 2200);
+            timerRef.current = setTimeout(() => { setEmailState("wrong"); setTimeout(() => setEmailState("ok"), 3500); }, 2200);
         } else setEmailState("idle");
     };
 
-    const fields = [
-        { id: "name", label: "Full Name" }, { id: "email", label: "Email" },
-        { id: "phone", label: "Phone" }, { id: "notes", label: "Requests" },
-    ];
+    const fields = [{ id: "name", label: "Full Name" }, { id: "email", label: "Email" }, { id: "phone", label: "Phone" }, { id: "notes", label: "Requests" }];
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            <p style={{ color: "#888", fontSize: "0.78rem", fontStyle: "italic", margin: "0 0 0.25rem" }}>
-                This is the easy part. Or so we let you believe.
-            </p>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.7rem" }}>
+            <p style={{ color: "#888", fontSize: "0.76rem", fontStyle: "italic", margin: "0 0 0.2rem" }}>This is the easy part. Or so we let you believe.</p>
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                 {fields.map(f => (
-                    <button key={f.id} onClick={() => setActiveField(f.id)}
-                        style={{ padding: "0.35rem 0.85rem", borderRadius: 100, border: "none", background: activeField === f.id ? "#1a1a1a" : "#ede8e8", color: activeField === f.id ? "white" : "#888", fontSize: "0.75rem", cursor: "pointer", fontFamily: "inherit", fontWeight: 500, transition: "all 0.15s" }}>
+                    <button key={f.id} onClick={() => setActive(f.id)}
+                        style={{ padding: "0.32rem 0.8rem", borderRadius: 100, border: "none", background: active === f.id ? "#1a1a1a" : "#ede8e8", color: active === f.id ? "white" : "#888", fontSize: "0.73rem", cursor: "pointer", fontFamily: "inherit", fontWeight: 500, transition: "all 0.15s" }}>
                         {f.label}
                     </button>
                 ))}
             </div>
             <AnimatePresence mode="wait">
-                <motion.div key={activeField} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}>
-                    {activeField === "name" && (
+                <motion.div key={active} initial={{ opacity: 0, y: 7 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -7 }} transition={{ duration: 0.17 }}>
+                    {active === "name" && (
                         <div>
                             <label style={labelStyle}>Full Name</label>
                             <AppendInput placeholder={NAME_PH} value={value.name} onChange={v => onChange({ ...value, name: v })} />
-                            {value.name.length > 0 && value.name.length < 4 && (
-                                <p style={{ fontSize: "0.72rem", color: "#aaa", marginTop: 4, fontStyle: "italic" }}>That seems short for a full legal name.</p>
-                            )}
+                            {value.name.length > 0 && value.name.length < 4 && <p style={{ fontSize: "0.7rem", color: "#aaa", marginTop: 3, fontStyle: "italic" }}>That seems short for a full legal name.</p>}
                         </div>
                     )}
-                    {activeField === "email" && (
+                    {active === "email" && (
                         <div>
                             <label style={labelStyle}>Email Address</label>
                             <div style={{ position: "relative" }}>
                                 <AppendInput placeholder={EMAIL_PH} value={value.email} onChange={handleEmail} />
                                 <div style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", zIndex: 2 }}>
-                                    {emailState === "checking" && <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}><Loader2 size={14} style={{ color: "#aaa" }} /></motion.div>}
-                                    {emailState === "wrong" && <AlertCircle size={14} style={{ color: "#e63946" }} />}
-                                    {emailState === "ok" && <CheckCircle2 size={14} style={{ color: "#2d9e6a" }} />}
+                                    {emailState === "checking" && <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}><Loader2 size={13} style={{ color: "#aaa" }} /></motion.div>}
+                                    {emailState === "wrong" && <AlertCircle size={13} style={{ color: "#e63946" }} />}
+                                    {emailState === "ok" && <CheckCircle2 size={13} style={{ color: "#2d9e6a" }} />}
                                 </div>
                             </div>
-                            {emailState === "wrong" && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ fontSize: "0.72rem", color: "#e63946", marginTop: 4, fontStyle: "italic" }}>Our system is unconvinced. It will reconsider shortly.</motion.p>}
+                            {emailState === "wrong" && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ fontSize: "0.7rem", color: "#e63946", marginTop: 3, fontStyle: "italic" }}>Our system is unconvinced. It will reconsider shortly.</motion.p>}
                         </div>
                     )}
-                    {activeField === "phone" && (
+                    {active === "phone" && (
                         <div>
-                            <label style={labelStyle}>Phone — Dialpad Only</label>
+                            <label style={labelStyle}>Phone — One Digit At A Time</label>
                             <Dialpad value={value.phone} onChange={v => onChange({ ...value, phone: v })} />
                         </div>
                     )}
-                    {activeField === "notes" && (
+                    {active === "notes" && (
                         <div>
-                            <label style={labelStyle}>
-                                Special Requests{" "}
-                                <span style={{ color: "#bbb", fontWeight: 400, fontSize: "0.68rem" }}>(read probability: 12%)</span>
-                            </label>
+                            <label style={labelStyle}>Special Requests <span style={{ color: "#bbb", fontWeight: 400, fontSize: "0.68rem" }}>(read probability: 12%)</span></label>
                             <AppendInput placeholder={NOTES_PH} value={value.notes} onChange={v => onChange({ ...value, notes: v })} asTextarea />
-                            {value.notes.length > 60 && (
-                                <p style={{ fontSize: "0.72rem", color: "#aaa", marginTop: 4, fontStyle: "italic" }}>We stopped reading at character 60. It looked great though.</p>
-                            )}
+                            {value.notes.length > 60 && <p style={{ fontSize: "0.7rem", color: "#aaa", marginTop: 3, fontStyle: "italic" }}>We stopped reading at character 60. It looked great though.</p>}
                         </div>
                     )}
                 </motion.div>
@@ -537,65 +699,50 @@ const StepDetails = ({ value, onChange }) => {
     );
 };
 
-/* ══════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════
    STEP 5 — CAPTCHA: 3-round abstract image grid
-══════════════════════════════════════════════════ */
-const CAPTCHA_ROUNDS = [
+══════════════════════════════════════════════════════════════ */
+const ROUNDS = [
     { prompt: "Select all squares that might contain a table", need: 3 },
     { prompt: "Select all squares that are definitely not a chair", need: 4 },
     { prompt: "Select squares where the lighting seems adequate for dining", need: 2 },
 ];
-const PALETTE = [
-    "#2a3a2a", "#3a2a2a", "#2a2a3a", "#3a3a2a", "#2a3a3a", "#3a2a3a",
-    "#1a2a1a", "#2a1a1a", "#1a1a2a", "#252525", "#1e2828", "#281e1e",
-    "#4a3020", "#203040", "#402030", "#304020", "#403020", "#204030",
-    "#5a4030", "#305060", "#503040", "#405030", "#303050", "#503030",
-];
-
+const PALETTE = ["#2a3a2a", "#3a2a2a", "#2a2a3a", "#3a3a2a", "#2a3a3a", "#3a2a3a", "#1a2a1a", "#2a1a1a", "#1a1a2a", "#252525", "#1e2828", "#281e1e", "#4a3020", "#203040", "#402030", "#304020", "#403020", "#204030", "#5a4030", "#305060", "#503040", "#405030", "#303050", "#503030"];
 const mkGrid = () => Array(9).fill(null).map(() => PALETTE[Math.floor(Math.random() * PALETTE.length)]);
 
 const StepCaptcha = ({ onPass }) => {
     const [round, setRound] = useState(0);
-    const [selected, setSelected] = useState([]);
+    const [sel, setSel] = useState([]);
     const [attempts, setAttempts] = useState(0);
     const [msg, setMsg] = useState(null);
     const [shake, setShake] = useState(false);
     const [checking, setChecking] = useState(false);
     const [passed, setPassed] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(20);
+    const [t, setT] = useState(20);
     const [grid, setGrid] = useState(mkGrid);
-    const cur = CAPTCHA_ROUNDS[Math.min(round, CAPTCHA_ROUNDS.length - 1)];
+    const cur = ROUNDS[Math.min(round, ROUNDS.length - 1)];
 
     useEffect(() => {
         if (passed) return;
-        const iv = setInterval(() => setTimeLeft(t => {
-            if (t <= 1) { setGrid(mkGrid()); setSelected([]); setMsg("Time's up. The images refreshed."); return 20; }
-            return t - 1;
-        }), 1000);
+        const iv = setInterval(() => setT(n => { if (n <= 1) { setGrid(mkGrid()); setSel([]); setMsg("Time's up. Images refreshed."); return 20; } return n - 1; }), 1000);
         return () => clearInterval(iv);
     }, [passed]);
 
-    const toggle = (i) => setSelected(s => s.includes(i) ? s.filter(x => x !== i) : [...s, i]);
+    const toggle = (i) => setSel(s => s.includes(i) ? s.filter(x => x !== i) : [...s, i]);
 
     const verify = () => {
-        if (selected.length !== cur.need) {
+        if (sel.length !== cur.need) {
             setShake(true); setTimeout(() => setShake(false), 500);
             setAttempts(a => a + 1);
-            const msgs = [
-                `We needed exactly ${cur.need}. You picked ${selected.length}.`,
-                "Incorrect. Our AI is mildly disappointed.",
-                "Still wrong. Perhaps try with fewer assumptions.",
-                "The correct answer exists. You haven't found it yet.",
-            ];
+            const msgs = [`We needed exactly ${cur.need}. You picked ${sel.length}.`, "Incorrect. Our AI is mildly disappointed.", "Still wrong. Perhaps try with fewer assumptions.", "The correct answer exists. You haven't found it yet."];
             setMsg(msgs[Math.min(attempts, msgs.length - 1)]);
-            setSelected([]); setGrid(mkGrid()); setTimeLeft(20);
-            return;
+            setSel([]); setGrid(mkGrid()); setT(20); return;
         }
         setChecking(true);
         setTimeout(() => {
             setChecking(false);
-            if (round + 1 >= CAPTCHA_ROUNDS.length) { setPassed(true); setTimeout(onPass, 900); }
-            else { setRound(r => r + 1); setSelected([]); setGrid(mkGrid()); setMsg(null); setTimeLeft(20); }
+            if (round + 1 >= ROUNDS.length) { setPassed(true); setTimeout(onPass, 900); }
+            else { setRound(r => r + 1); setSel([]); setGrid(mkGrid()); setMsg(null); setT(20); }
         }, 1800);
     };
 
@@ -603,71 +750,52 @@ const StepCaptcha = ({ onPass }) => {
         <div style={{ textAlign: "center", padding: "2rem 0" }}>
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200 }}>
                 <CheckCircle2 size={48} style={{ color: "#2d9e6a", margin: "0 auto 1rem" }} />
-                <p style={{ fontFamily: "Georgia, serif", fontSize: "1.1rem" }}>Humanity confirmed. Probably.</p>
+                <p style={{ fontFamily: "Georgia,serif", fontSize: "1.1rem" }}>Humanity confirmed. Probably.</p>
             </motion.div>
         </div>
     );
     if (checking) return (
         <div style={{ textAlign: "center", padding: "2rem 0" }}>
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} style={{ display: "inline-block" }}>
-                <Loader2 size={32} style={{ color: "#e63946" }} />
-            </motion.div>
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} style={{ display: "inline-block" }}><Loader2 size={32} style={{ color: "#e63946" }} /></motion.div>
             <p style={{ marginTop: "1rem", fontStyle: "italic", color: "#888", fontSize: "0.85rem" }}>Verifying your humanity…</p>
         </div>
     );
 
     return (
         <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                <p style={{ fontSize: "0.72rem", color: "#aaa" }}>Round {round + 1} of {CAPTCHA_ROUNDS.length}</p>
-                <span style={{ fontSize: "0.72rem", color: timeLeft < 6 ? "#e63946" : "#bbb" }}>{timeLeft}s</span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+                <p style={{ fontSize: "0.7rem", color: "#aaa" }}>Round {round + 1} of {ROUNDS.length}</p>
+                <span style={{ fontSize: "0.7rem", color: t < 6 ? "#e63946" : "#bbb" }}>{t}s</span>
             </div>
-            <div style={{ height: 2, background: "#f0ecea", borderRadius: 2, overflow: "hidden", marginBottom: "1rem" }}>
-                <motion.div key={timeLeft + "t" + round} animate={{ width: `${(timeLeft / 20) * 100}%` }} transition={{ duration: 0.9, ease: "linear" }}
-                    style={{ height: "100%", background: timeLeft < 6 ? "#e63946" : "#1a1a1a", borderRadius: 2 }} />
+            <div style={{ height: 2, background: "#f0ecea", borderRadius: 2, overflow: "hidden", marginBottom: "0.9rem" }}>
+                <motion.div key={t + "r" + round} animate={{ width: `${(t / 20) * 100}%` }} transition={{ duration: 0.9, ease: "linear" }}
+                    style={{ height: "100%", background: t < 6 ? "#e63946" : "#1a1a1a", borderRadius: 2 }} />
             </div>
-            <p style={{ fontSize: "0.85rem", color: "#333", marginBottom: "0.4rem", fontFamily: "Georgia,serif" }}>{cur.prompt}</p>
-            <p style={{ fontSize: "0.72rem", color: "#aaa", marginBottom: "1rem", fontStyle: "italic" }}>Select exactly {cur.need} square{cur.need !== 1 ? "s" : ""}.</p>
+            <p style={{ fontSize: "0.83rem", color: "#333", marginBottom: "0.35rem", fontFamily: "Georgia,serif" }}>{cur.prompt}</p>
+            <p style={{ fontSize: "0.7rem", color: "#aaa", marginBottom: "0.9rem", fontStyle: "italic" }}>Select exactly {cur.need} square{cur.need !== 1 ? "s" : ""}.</p>
             <motion.div animate={shake ? { x: [-6, 6, -6, 6, 0] } : {}}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: "1rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 5, marginBottom: "1rem" }}>
                     {grid.map((color, i) => (
                         <motion.button key={i} whileTap={{ scale: 0.9 }} onClick={() => toggle(i)}
-                            style={{ height: 72, borderRadius: 10, background: color, border: selected.includes(i) ? "3px solid #e63946" : "3px solid transparent", cursor: "pointer", position: "relative", overflow: "hidden", transition: "border-color 0.15s" }}>
+                            style={{ height: 70, borderRadius: 10, background: color, border: sel.includes(i) ? "3px solid #e63946" : "3px solid transparent", cursor: "pointer", position: "relative", overflow: "hidden", transition: "border-color 0.12s" }}>
                             <div style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(255,255,255,0.03) 5px,rgba(255,255,255,0.03) 6px)", pointerEvents: "none" }} />
-                            {selected.includes(i) && (
-                                <div style={{ position: "absolute", inset: 0, background: "rgba(230,57,70,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                    <CheckCircle2 size={20} style={{ color: "white" }} />
-                                </div>
-                            )}
+                            {sel.includes(i) && <div style={{ position: "absolute", inset: 0, background: "rgba(230,57,70,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}><CheckCircle2 size={20} style={{ color: "white" }} /></div>}
                         </motion.button>
                     ))}
                 </div>
             </motion.div>
-            <button onClick={verify} style={{ ...primaryBtnStyle, width: "100%" }}>
-                Verify ({selected.length}/{cur.need} selected)
-            </button>
-            {msg && (
-                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "#b0272c", fontStyle: "italic", textAlign: "center" }}>
-                    {msg}{attempts > 0 ? ` (${attempts + 1} attempts)` : ""}
-                </motion.p>
-            )}
+            <button onClick={verify} style={{ ...primaryBtnStyle, width: "100%" }}>Verify ({sel.length}/{cur.need} selected)</button>
+            {msg && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: "0.65rem", fontSize: "0.76rem", color: "#b0272c", fontStyle: "italic", textAlign: "center" }}>{msg}{attempts > 0 ? ` (${attempts + 1} attempts)` : ""}</motion.p>}
         </div>
     );
 };
 
-/* ══════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════
    STEP 6 — LOADING
-══════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════════ */
 const StepLoading = ({ onComplete }) => {
     const [phase, setPhase] = useState(0);
-    const phases = [
-        { label: "Contacting the kitchen…", ms: 2200 },
-        { label: "Checking table availability…", ms: 2600 },
-        { label: "Almost confirmed…", ms: 2000 },
-        { label: "One final verification…", ms: 2400 },
-        { label: "Finalising your reservation…", ms: 1800 },
-    ];
+    const phases = [{ label: "Contacting the kitchen…", ms: 2200 }, { label: "Checking table availability…", ms: 2600 }, { label: "Almost confirmed…", ms: 2000 }, { label: "One final verification…", ms: 2400 }, { label: "Finalising your reservation…", ms: 1800 }];
     useEffect(() => {
         if (phase >= phases.length) { onComplete(); return; }
         const t = setTimeout(() => setPhase(p => p + 1), phases[phase].ms);
@@ -680,112 +808,50 @@ const StepLoading = ({ onComplete }) => {
                 <Loader2 size={36} style={{ color: "#e63946" }} />
             </motion.div>
             <AnimatePresence mode="wait">
-                <motion.p key={phase} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                    style={{ fontFamily: "Georgia, serif", fontSize: "1rem", color: "#1a1a1a", marginBottom: "0.5rem" }}>
+                <motion.p key={phase} initial={{ opacity: 0, y: 7 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -7 }} style={{ fontFamily: "Georgia,serif", fontSize: "0.95rem", color: "#1a1a1a", marginBottom: "0.5rem" }}>
                     {phase < phases.length ? phases[phase].label : "Done."}
                 </motion.p>
             </AnimatePresence>
-            <div style={{ height: 4, background: "#f0ecea", borderRadius: 2, overflow: "hidden", maxWidth: 280, margin: "1rem auto 0.5rem" }}>
-                <motion.div animate={{ width: `${pct}%` }} transition={{ duration: 0.6, ease: "easeOut" }}
-                    style={{ height: "100%", background: "#e63946", borderRadius: 2 }} />
+            <div style={{ height: 4, background: "#f0ecea", borderRadius: 2, overflow: "hidden", maxWidth: 260, margin: "0.9rem auto 0.4rem" }}>
+                <motion.div animate={{ width: `${pct}%` }} transition={{ duration: 0.55, ease: "easeOut" }} style={{ height: "100%", background: "#e63946", borderRadius: 2 }} />
             </div>
-            <p style={{ fontSize: "0.72rem", color: "#aaa" }}>{pct}%</p>
-            {phase === 3 && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: "1rem", fontSize: "0.75rem", color: "#bbb", fontStyle: "italic" }}>Your patience is our secret ingredient.</motion.p>}
+            <p style={{ fontSize: "0.7rem", color: "#aaa" }}>{pct}%</p>
+            {phase === 3 && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: "1rem", fontSize: "0.74rem", color: "#bbb", fontStyle: "italic" }}>Your patience is our secret ingredient.</motion.p>}
         </div>
     );
 };
 
-/* ══════════════════════════════════════════════════
-   CLOSE SCREEN: 4-phase guilt trip
-══════════════════════════════════════════════════ */
-const FakeLeaveLoader = ({ onDone }) => {
-    const [pct, setPct] = useState(0);
-    useEffect(() => {
-        const iv = setInterval(() => setPct(p => { if (p >= 100) { clearInterval(iv); onDone(); return 100; } return p + 3; }), 100);
-        return () => clearInterval(iv);
-    }, []);
-    return (
-        <div style={{ height: 3, background: "#f0ecea", borderRadius: 2, overflow: "hidden", maxWidth: 200, margin: "0 auto" }}>
-            <div style={{ height: "100%", width: `${pct}%`, background: "#aaa", borderRadius: 2, transition: "width 0.1s linear" }} />
-        </div>
-    );
-};
+/* ══════════════════════════════════════════════════════════════
+   CLOSE GUARD — Snake game then navigate home
+══════════════════════════════════════════════════════════════ */
+const CloseGuard = ({ onForceClose }) => (
+    <div style={overlayStyle}>
+        <motion.div initial={{ scale: 0.82, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+            style={{ ...modalStyle, padding: "2rem", maxWidth: 460, textAlign: "center" }}>
+            <h3 style={{ fontFamily: "Georgia,serif", fontSize: "1.3rem", margin: "0 0 0.4rem", color: "#1a1a1a" }}>
+                You want to leave?
+            </h3>
+            <p style={{ color: "#888", fontSize: "0.8rem", fontStyle: "italic", marginBottom: "1.5rem" }}>
+                Prove it. Collect 3 items to unlock the exit.
+            </p>
+            <SnakeGame onComplete={onForceClose} />
+        </motion.div>
+    </div>
+);
 
-const CloseScreen = ({ onConfirm }) => {
-    const [phase, setPhase] = useState(0);
-    return (
-        <div style={overlayStyle}>
-            <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                style={{ ...modalStyle, textAlign: "center", padding: "2.5rem 2rem", maxWidth: 400 }}>
-                <AnimatePresence mode="wait">
-                    {phase === 0 && (
-                        <motion.div key="q" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                            <ZoomIn size={40} style={{ color: "#e63946", margin: "0 auto 1rem" }} />
-                            <h3 style={{ fontFamily: "Georgia,serif", fontSize: "1.4rem", margin: "0 0 0.75rem", color: "#1a1a1a" }}>Leave? Really?</h3>
-                            <p style={{ color: "#888", fontSize: "0.85rem", lineHeight: 1.6, marginBottom: "1.5rem" }}>
-                                You were so close. The table was right there. The chef was practising your order in the mirror.
-                            </p>
-                            <div style={{ display: "flex", gap: 10 }}>
-                                <button onClick={() => setPhase(1)} style={{ flex: 1, ...primaryBtnStyle, background: "#555" }}>Yes, leave</button>
-                                <button onClick={onConfirm} style={{ flex: 1, ...primaryBtnStyle }}>Actually, stay</button>
-                            </div>
-                        </motion.div>
-                    )}
-                    {phase === 1 && (
-                        <motion.div key="guilt" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                            <h3 style={{ fontFamily: "Georgia,serif", fontSize: "1.3rem", margin: "0 0 0.75rem", color: "#1a1a1a" }}>The table will remain empty.</h3>
-                            <p style={{ color: "#888", fontSize: "0.85rem", lineHeight: 1.6, marginBottom: "0.5rem" }}>
-                                It will sit there with a "Reserved" sign nobody asked for.
-                            </p>
-                            <p style={{ color: "#bbb", fontSize: "0.78rem", lineHeight: 1.6, marginBottom: "1.5rem", fontStyle: "italic" }}>
-                                The chef has been informed. He took it personally.
-                            </p>
-                            <div style={{ display: "flex", gap: 10 }}>
-                                <button onClick={() => setPhase(2)} style={{ flex: 1, ...primaryBtnStyle, background: "#777" }}>I must go</button>
-                                <button onClick={onConfirm} style={{ flex: 1, ...primaryBtnStyle }}>Fine, I'll stay</button>
-                            </div>
-                        </motion.div>
-                    )}
-                    {phase === 2 && (
-                        <motion.div key="load" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }} style={{ display: "inline-block", marginBottom: "1rem" }}>
-                                <Loader2 size={32} style={{ color: "#aaa" }} />
-                            </motion.div>
-                            <p style={{ fontFamily: "Georgia,serif", fontSize: "1rem", color: "#555", marginBottom: "0.5rem" }}>Processing your decision to leave…</p>
-                            <p style={{ color: "#bbb", fontSize: "0.75rem", fontStyle: "italic", marginBottom: "1.5rem" }}>This takes exactly as long as it takes.</p>
-                            <FakeLeaveLoader onDone={() => setPhase(3)} />
-                        </motion.div>
-                    )}
-                    {phase === 3 && (
-                        <motion.div key="fine" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                            <h3 style={{ fontFamily: "Georgia,serif", fontSize: "1.4rem", margin: "0 0 0.75rem", color: "#1a1a1a" }}>Fine. Go.</h3>
-                            <p style={{ color: "#888", fontSize: "0.85rem", lineHeight: 1.6, marginBottom: "1.5rem" }}>
-                                We released your table back into the wild. It found another family immediately. They seemed delighted.
-                            </p>
-                            <button onClick={onConfirm} style={{ ...primaryBtnStyle, width: "100%", background: "#1a1a1a" }}>
-                                Close (we mean it this time)
-                            </button>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </motion.div>
-        </div>
-    );
-};
-
-/* ══════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════
    SHARED STYLES
-══════════════════════════════════════════════════ */
-const navBtnStyle = { background: "white", border: "1px solid #e8e2e2", borderRadius: 8, padding: "4px 8px", cursor: "pointer", display: "flex", alignItems: "center" };
-const labelStyle = { display: "block", fontSize: "0.78rem", fontWeight: 500, color: "#555", marginBottom: "0.4rem" };
-const appendBase = { width: "100%", background: "white", border: "1px solid #e8e2e2", borderRadius: 12, padding: "0.65rem 0.9rem", fontSize: "0.88rem", color: "#1a1a1a", outline: "none", fontFamily: "inherit", boxSizing: "border-box", position: "relative", zIndex: 1 };
-const overlayStyle = { position: "fixed", inset: 0, background: "rgba(15,10,10,0.6)", backdropFilter: "blur(5px)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", fontFamily: "'Nunito', -apple-system, sans-serif" };
-const modalStyle = { background: "#f5f1f1", borderRadius: 24, padding: "2rem", width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 32px 80px rgba(0,0,0,0.22)", position: "relative" };
-const primaryBtnStyle = { background: "#e63946", color: "white", border: "none", borderRadius: 100, padding: "0.7rem 1.75rem", fontSize: "0.88rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(230,57,70,0.25)" };
+══════════════════════════════════════════════════════════════ */
+const navBtnStyle = { background: "white", border: "1px solid #e8e2e2", borderRadius: 8, padding: "4px 7px", cursor: "pointer", display: "flex", alignItems: "center" };
+const labelStyle = { display: "block", fontSize: "0.76rem", fontWeight: 500, color: "#555", marginBottom: "0.35rem" };
+const appendBase = { width: "100%", background: "white", border: "1px solid #e8e2e2", borderRadius: 12, padding: "0.62rem 0.9rem", fontSize: "0.88rem", color: "#1a1a1a", outline: "none", fontFamily: "inherit", boxSizing: "border-box", position: "relative", zIndex: 1 };
+const overlayStyle = { position: "fixed", inset: 0, background: "rgba(15,10,10,0.62)", backdropFilter: "blur(5px)", zIndex: 9999900, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", fontFamily: "'Nunito',-apple-system,sans-serif" };
+const modalStyle = { background: "#f5f1f1", borderRadius: 24, padding: "2rem", width: "100%", maxWidth: 480, maxHeight: "92vh", overflowY: "auto", boxShadow: "0 32px 80px rgba(0,0,0,0.22)", position: "relative" };
+const primaryBtnStyle = { background: "#e63946", color: "white", border: "none", borderRadius: 100, padding: "0.7rem 1.75rem", fontSize: "0.86rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(230,57,70,0.22)" };
 
-/* ══════════════════════════════════════════════════
-   STEPS
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   STEPS CONFIG
+══════════════════════════════════════════════════════════════ */
 const STEPS = [
     { title: "Pick a Date", subtitle: "Availability is a living document." },
     { title: "Select a Time", subtitle: "Speed is strongly recommended." },
@@ -795,19 +861,32 @@ const STEPS = [
     { title: "Confirming…", subtitle: "This will take exactly as long as it takes." },
 ];
 
-/* ══════════════════════════════════════════════════
+const POPUPS = [
+    "Our system just restarted. Your progress is safe. (Probably.)",
+    "A staff member reviewed your booking. They have questions.",
+    "73% of people abandon at this step. You're still here. Interesting.",
+    "We updated our Privacy Policy. Nothing changed. Just wanted to mention it.",
+    "Your session was about to expire. We extended it. You're welcome.",
+    "The chef just walked past your table assignment. He seemed conflicted.",
+    "Fun fact: the average booking takes 4 minutes. You're at minute 7.",
+];
+
+/* ══════════════════════════════════════════════════════════════
    MAIN WIZARD
-══════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════════ */
 const BookTableWizard = ({ onClose }) => {
     const [step, setStep] = useState(0);
     const [done, setDone] = useState(false);
-    const [showClose, setShowClose] = useState(false);
+    const [showCloseGuard, setShowCloseGuard] = useState(false);
     const [captchaPassed, setCaptchaPassed] = useState(false);
     const [showTsunami, setShowTsunami] = useState(false);
     const [tsunamiKey, setTsunamiKey] = useState(0);
     const [btnOffset, setBtnOffset] = useState({ x: 0, y: 0 });
     const [missCount, setMissCount] = useState(0);
-    const [randomPopup, setRandomPopup] = useState(null);
+    const [popup, setPopup] = useState(null);
+    const [timerPopup, setTimerPopup] = useState(false);
+    const popupRef = useRef(null);
+    const timerRef = useRef(null);
     const btnRef = useRef(null);
 
     const [date, setDate] = useState("");
@@ -821,20 +900,23 @@ const BookTableWizard = ({ onClose }) => {
         return () => clearInterval(iv);
     }, []);
 
-    // Random interruption popups
-    const POPUPS = [
-        "Our system just restarted. Your progress is safe. (Probably.)",
-        "A staff member reviewed your booking. They have questions.",
-        "73% of people give up at this step. You're still here.",
-        "We updated our Privacy Policy. Nothing changed. Just wanted to mention it.",
-        "Your session expires in 30 minutes. We reset that timer 4 times.",
-    ];
+    // Acknowledged popup — every 45s, not too frequent
     useEffect(() => {
         const iv = setInterval(() => {
-            if (step < 5) { setRandomPopup(POPUPS[Math.floor(Math.random() * POPUPS.length)]); setTimeout(() => setRandomPopup(null), 4500); }
-        }, 18000);
+            if (step < 5 && !popup) {
+                setPopup(POPUPS[Math.floor(Math.random() * POPUPS.length)]);
+            }
+        }, 45000);
         return () => clearInterval(iv);
-    }, [step]);
+    }, [step, popup]);
+
+    // Timer popup — every 20s, centred over the form
+    useEffect(() => {
+        const iv = setInterval(() => {
+            if (step < 5 && !timerPopup) setTimerPopup(true);
+        }, 20000);
+        return () => clearInterval(iv);
+    }, [step, timerPopup]);
 
     const canProceed = () => {
         if (step === 0) return !!date;
@@ -863,7 +945,17 @@ const BookTableWizard = ({ onClose }) => {
         setStep(s => s + 1);
     };
 
-    if (showClose) return <><RageCursor /><CloseScreen onConfirm={onClose} /></>;
+    // Close guard: show snake → then navigate to home (call onClose which navigates)
+    const handleClose = () => setShowCloseGuard(true);
+    const handleForceClose = () => { setShowCloseGuard(false); onClose(); };
+
+    if (showCloseGuard) return (
+        <>
+            <RageCursor />
+            <CloseGuard onForceClose={handleForceClose} />
+            <style>{`* { cursor: none !important; }`}</style>
+        </>
+    );
 
     if (done) return (
         <>
@@ -874,16 +966,17 @@ const BookTableWizard = ({ onClose }) => {
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.1 }}>
                         <Utensils size={48} style={{ color: "#e63946", margin: "0 auto 1.5rem" }} />
                     </motion.div>
-                    <h2 style={{ fontFamily: "Georgia, serif", fontSize: "2rem", color: "#1a1a1a", margin: "0 0 0.75rem" }}>Table Reserved.</h2>
+                    <h2 style={{ fontFamily: "Georgia,serif", fontSize: "2rem", color: "#1a1a1a", margin: "0 0 0.75rem" }}>Table Reserved.</h2>
                     <p style={{ color: "#888", fontSize: "0.9rem", lineHeight: 1.7, marginBottom: "0.5rem" }}>
                         Table for <strong>{guests}</strong> on <strong>{date}</strong> at <strong>{time}</strong>.
                     </p>
-                    <p style={{ color: "#bbb", fontSize: "0.78rem", fontStyle: "italic", marginBottom: "2rem" }}>
+                    <p style={{ color: "#bbb", fontSize: "0.76rem", fontStyle: "italic", marginBottom: "2rem" }}>
                         A confirmation email will arrive somewhere between now and never.
                     </p>
                     <button onClick={onClose} style={primaryBtnStyle}>Close</button>
                 </motion.div>
             </div>
+            <style>{`* { cursor: none !important; }`}</style>
         </>
     );
 
@@ -891,50 +984,50 @@ const BookTableWizard = ({ onClose }) => {
         <>
             <RageCursor />
 
+            {/* Tsunami */}
             <AnimatePresence>
                 {showTsunami && <TsunamiWave key={tsunamiKey} onComplete={() => setShowTsunami(false)} />}
             </AnimatePresence>
 
+            {/* Large random popup — must dismiss */}
             <AnimatePresence>
-                {randomPopup && (
-                    <motion.div initial={{ x: 60, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 60, opacity: 0 }}
-                        style={{ position: "fixed", bottom: "2rem", right: "1.5rem", zIndex: 999997, background: "white", borderRadius: 14, padding: "0.9rem 1.2rem", maxWidth: 280, boxShadow: "0 8px 30px rgba(0,0,0,0.12)", border: "1px solid #ede8e8", fontSize: "0.8rem", color: "#555", lineHeight: 1.5 }}>
-                        <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                            <AlertCircle size={14} style={{ color: "#e63946", flexShrink: 0, marginTop: 1 }} />
-                            <span>{randomPopup}</span>
-                        </div>
-                    </motion.div>
-                )}
+                {popup && <AnnoyPopup key={popup} msg={popup} onDismiss={() => setPopup(null)} />}
             </AnimatePresence>
 
+            {/* Timer popup */}
+            <AnimatePresence>
+                {timerPopup && <TimerPopup key={Date.now()} onClose={() => setTimerPopup(false)} />}
+            </AnimatePresence>
+
+            {/* Main modal */}
             <div style={overlayStyle}>
                 <motion.div initial={{ scale: 0.92, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0 }}
                     transition={{ type: "spring", stiffness: 280, damping: 28 }} style={modalStyle}>
 
                     {/* Header */}
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "1.5rem" }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "1.4rem" }}>
                         <div>
-                            <p style={{ fontSize: "0.72rem", color: "#e63946", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>
+                            <p style={{ fontSize: "0.7rem", color: "#e63946", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 3 }}>
                                 Step {step + 1} of {STEPS.length}
                             </p>
-                            <h2 style={{ fontFamily: "Georgia, serif", fontSize: "1.6rem", color: "#1a1a1a", margin: 0, lineHeight: 1.1 }}>{STEPS[step].title}</h2>
-                            <p style={{ color: "#aaa", fontSize: "0.78rem", margin: "6px 0 0", fontStyle: "italic" }}>{STEPS[step].subtitle}</p>
+                            <h2 style={{ fontFamily: "Georgia,serif", fontSize: "1.55rem", color: "#1a1a1a", margin: 0, lineHeight: 1.1 }}>{STEPS[step].title}</h2>
+                            <p style={{ color: "#aaa", fontSize: "0.76rem", margin: "5px 0 0", fontStyle: "italic" }}>{STEPS[step].subtitle}</p>
                         </div>
-                        <button onClick={() => setShowClose(true)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", padding: 4, marginTop: 4 }}>
+                        <button onClick={handleClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", padding: 4, marginTop: 3 }}>
                             <X size={20} />
                         </button>
                     </div>
 
                     {/* Progress */}
-                    <div style={{ height: 2, background: "#f0ecea", borderRadius: 2, marginBottom: "1.75rem", overflow: "hidden" }}>
+                    <div style={{ height: 2, background: "#f0ecea", borderRadius: 2, marginBottom: "1.6rem", overflow: "hidden" }}>
                         <motion.div animate={{ width: `${((step + 1) / STEPS.length) * 100}%` }} transition={{ duration: 0.4, ease: "easeOut" }}
                             style={{ height: "100%", background: "#e63946", borderRadius: 2 }} />
                     </div>
 
                     {/* Content */}
-                    <div style={{ minHeight: 300 }}>
+                    <div style={{ minHeight: 290 }}>
                         <AnimatePresence mode="wait">
-                            <motion.div key={step} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.2 }}>
+                            <motion.div key={step} initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.19 }}>
                                 {step === 0 && <StepDate value={date} onChange={setDate} />}
                                 {step === 1 && <StepTime value={time} onChange={setTime} />}
                                 {step === 2 && <StepGuests value={guests} onChange={setGuests} />}
@@ -947,21 +1040,21 @@ const BookTableWizard = ({ onClose }) => {
 
                     {/* Nav */}
                     {step < 4 && (
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "1.5rem", position: "relative" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "1.4rem", position: "relative" }}>
                             <button onClick={() => { setBtnOffset({ x: 0, y: 0 }); setStep(s => Math.max(0, s - 1)); }} disabled={step === 0}
-                                style={{ background: "none", border: "1px solid #e8e2e2", borderRadius: 100, padding: "0.65rem 1.25rem", fontSize: "0.85rem", color: step === 0 ? "#ddd" : "#555", cursor: step === 0 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 6, fontFamily: "inherit" }}>
-                                <ChevronLeft size={14} /> Back
+                                style={{ background: "none", border: "1px solid #e8e2e2", borderRadius: 100, padding: "0.62rem 1.2rem", fontSize: "0.83rem", color: step === 0 ? "#ddd" : "#555", cursor: step === 0 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5, fontFamily: "inherit" }}>
+                                <ChevronLeft size={13} /> Back
                             </button>
                             <motion.button ref={btnRef} animate={{ x: btnOffset.x, y: btnOffset.y }} transition={{ type: "spring", stiffness: 300, damping: 20 }}
                                 onMouseEnter={handleNextHover} onClick={handleNext}
-                                style={{ ...primaryBtnStyle, display: "flex", alignItems: "center", gap: 6, opacity: canProceed() ? 1 : 0.85 }}>
+                                style={{ ...primaryBtnStyle, display: "flex", alignItems: "center", gap: 5, opacity: canProceed() ? 1 : 0.82 }}>
                                 {canProceed() ? "Continue" : "Not yet"}
-                                <ChevronRight size={14} />
+                                <ChevronRight size={13} />
                             </motion.button>
                         </div>
                     )}
                     {missCount > 2 && (
-                        <p style={{ textAlign: "right", fontSize: "0.68rem", color: "#ddd", marginTop: 6, fontStyle: "italic" }}>
+                        <p style={{ textAlign: "right", fontSize: "0.66rem", color: "#ddd", marginTop: 5, fontStyle: "italic" }}>
                             {missCount} missed. The button is doing what it can.
                         </p>
                     )}
