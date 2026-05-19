@@ -173,69 +173,101 @@ const TimerPopup = ({ onClose }) => {
 };
 
 /* ══════════════════════════════════════════════════════════════
-   MINI SNAKE GAME — shown when user tries to close
+   MINI SNAKE GAME — X button guard. Simple, clear, no rage cursor.
 ══════════════════════════════════════════════════════════════ */
-const COLS = 12; const ROWS = 10; const CELL = 26;
-const dir = { UP: [0, -1], DOWN: [0, 1], LEFT: [-1, 0], RIGHT: [1, 0] };
+const COLS = 10; const ROWS = 8; const CELL = 30;
+const DIRS = { UP: [0, -1], DOWN: [0, 1], LEFT: [-1, 0], RIGHT: [1, 0] };
 
 const SnakeGame = ({ onComplete }) => {
-    const [snake, setSnake] = useState([[6, 5], [5, 5], [4, 5]]);
-    const [food, setFood] = useState([9, 3]);
-    const [d, setD] = useState("RIGHT");
+    const initSnake = [[4, 4], [3, 4], [2, 4]];
+    const [snake, setSnake] = useState(initSnake);
+    const [food, setFood] = useState([7, 2]);
     const [score, setScore] = useState(0);
     const [dead, setDead] = useState(false);
     const [won, setWon] = useState(false);
+    const [started, setStarted] = useState(false);
     const dRef = useRef("RIGHT");
 
-    const placeFood = (s) => {
+    const randFood = (s) => {
         let f;
         do { f = [Math.floor(Math.random() * COLS), Math.floor(Math.random() * ROWS)]; }
         while (s.some(([x, y]) => x === f[0] && y === f[1]));
         return f;
     };
 
+    // Keyboard
     useEffect(() => {
         const onKey = (e) => {
             const map = { ArrowUp: "UP", ArrowDown: "DOWN", ArrowLeft: "LEFT", ArrowRight: "RIGHT" };
-            if (map[e.key]) { e.preventDefault(); dRef.current = map[e.key]; setD(map[e.key]); }
+            if (map[e.key]) { e.preventDefault(); dRef.current = map[e.key]; if (!started) setStarted(true); }
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
-    }, []);
+    }, [started]);
 
+    // Game loop — only runs when started
     useEffect(() => {
-        if (dead || won) return;
+        if (!started || dead || won) return;
         const iv = setInterval(() => {
             setSnake(prev => {
-                const [dx, dy] = dir[dRef.current];
+                const [dx, dy] = DIRS[dRef.current];
                 const head = [prev[0][0] + dx, prev[0][1] + dy];
                 if (head[0] < 0 || head[0] >= COLS || head[1] < 0 || head[1] >= ROWS) { setDead(true); return prev; }
                 if (prev.some(([x, y]) => x === head[0] && y === head[1])) { setDead(true); return prev; }
                 let next = [head, ...prev];
                 if (head[0] === food[0] && head[1] === food[1]) {
-                    setScore(sc => { const ns = sc + 1; if (ns >= 3) { setTimeout(() => setWon(true), 300); } return ns; });
-                    setFood(placeFood(next));
+                    setScore(sc => { const ns = sc + 1; if (ns >= 3) setTimeout(() => setWon(true), 250); return ns; });
+                    setFood(randFood(next));
                 } else { next = next.slice(0, -1); }
                 return next;
             });
-        }, 140);
+        }, 180); // slower = easier
         return () => clearInterval(iv);
-    }, [dead, won, food]);
+    }, [started, dead, won, food]);
 
-    const reset = () => { setSnake([[6, 5], [5, 5], [4, 5]]); setD("RIGHT"); dRef.current = "RIGHT"; setScore(0); setDead(false); setWon(false); setFood([9, 3]); };
-    const btnDir = (direction) => { dRef.current = direction; setD(direction); };
+    const reset = () => {
+        setSnake(initSnake); dRef.current = "RIGHT";
+        setScore(0); setDead(false); setWon(false); setStarted(false); setFood([7, 2]);
+    };
+
+    const press = (dir) => { dRef.current = dir; if (!started) setStarted(true); };
 
     return (
-        <div style={{ textAlign: "center", fontFamily: "'Nunito',-apple-system,sans-serif" }}>
-            <h3 style={{ fontFamily: "Georgia,serif", fontSize: "1.3rem", margin: "0 0 0.4rem", color: "#1a1a1a" }}>
-                Not so fast.
-            </h3>
-            <p style={{ color: "#888", fontSize: "0.8rem", marginBottom: "1rem", fontStyle: "italic" }}>
-                Collect 3 items to unlock the close button. Score: {score}/3
+        <div style={{ fontFamily: "'Nunito',-apple-system,sans-serif", textAlign: "center" }}>
+
+            {/* Title */}
+            <h3 style={{ fontFamily: "Georgia,serif", fontSize: "1.25rem", margin: "0 0 0.25rem", color: "#1a1a1a" }}>Not so fast.</h3>
+            <p style={{ color: "#888", fontSize: "0.78rem", marginBottom: "0.9rem", fontStyle: "italic" }}>
+                Collect 3 plates to unlock the exit.
             </p>
 
+            {/* Legend */}
+            <div style={{ display: "flex", justifyContent: "center", gap: 16, marginBottom: "0.75rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.7rem", color: "#777" }}>
+                    <div style={{ width: 14, height: 14, borderRadius: 3, background: "#e63946" }} /> You
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.7rem", color: "#777" }}>
+                    <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#1a1a1a" }} /> Collect
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.7rem", color: "#777" }}>
+                    <div style={{ width: 14, height: 14, borderRadius: 2, background: "#f5b3b8" }} /> Body (avoid)
+                </div>
+            </div>
+
+            {/* Score dots */}
+            <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: "0.75rem" }}>
+                {[0, 1, 2].map(i => (
+                    <div key={i} style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #e63946", background: i < score ? "#e63946" : "transparent", transition: "background 0.2s" }} />
+                ))}
+            </div>
+
             {/* Board */}
-            <div style={{ display: "inline-block", border: "2px solid #e8e2e2", borderRadius: 10, overflow: "hidden", background: "#faf8f8", marginBottom: "0.75rem" }}>
+            <div style={{ display: "inline-block", border: "2px solid #e8e2e2", borderRadius: 12, overflow: "hidden", background: "#faf8f8", marginBottom: "0.8rem", position: "relative" }}>
+                {!started && !dead && (
+                    <div style={{ position: "absolute", inset: 0, background: "rgba(245,241,241,0.88)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, borderRadius: 10 }}>
+                        <p style={{ fontFamily: "Georgia,serif", fontSize: "0.9rem", color: "#555", fontStyle: "italic" }}>Tap an arrow to start</p>
+                    </div>
+                )}
                 {Array(ROWS).fill(null).map((_, row) => (
                     <div key={row} style={{ display: "flex" }}>
                         {Array(COLS).fill(null).map((_, col) => {
@@ -246,8 +278,8 @@ const SnakeGame = ({ onComplete }) => {
                                 <div key={col} style={{
                                     width: CELL, height: CELL,
                                     background: isHead ? "#e63946" : isBody ? "#f5b3b8" : isFood ? "#1a1a1a" : "transparent",
-                                    borderRadius: isHead ? 5 : isBody ? 3 : isFood ? "50%" : 0,
-                                    transition: "background 0.05s",
+                                    borderRadius: isHead ? 6 : isBody ? 3 : isFood ? "50%" : 0,
+                                    transition: "background 0.06s",
                                 }} />
                             );
                         })}
@@ -255,35 +287,183 @@ const SnakeGame = ({ onComplete }) => {
                 ))}
             </div>
 
-            {/* Mobile D-pad */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,40px)", gap: 4, margin: "0 auto 1rem", width: "fit-content" }}>
-                {[["", "UP", ""],
-                ["LEFT", "DOWN", "RIGHT"]].flat().map((k, i) => k ? (
-                    <button key={i} onClick={() => btnDir(k)}
-                        style={{ width: 40, height: 40, borderRadius: 8, border: "1px solid #e8e2e2", background: "white", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700, color: "#555", fontFamily: "inherit" }}>
-                        {k === "UP" ? "↑" : k === "DOWN" ? "↓" : k === "LEFT" ? "←" : "→"}
-                    </button>
-                ) : <div key={i} />)}
+            {/* D-pad — big and obvious */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 52px)", gridTemplateRows: "repeat(2, 52px)", gap: 5, margin: "0 auto 0.9rem", width: "fit-content" }}>
+                {/* Row 1: empty, UP, empty */}
+                <div />
+                <button onClick={() => press("UP")} style={dpadBtn}>↑</button>
+                <div />
+                {/* Row 2: LEFT, DOWN, RIGHT */}
+                <button onClick={() => press("LEFT")} style={dpadBtn}>←</button>
+                <button onClick={() => press("DOWN")} style={dpadBtn}>↓</button>
+                <button onClick={() => press("RIGHT")} style={dpadBtn}>→</button>
             </div>
 
+            {/* States */}
             {won && (
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring" }}>
-                    <p style={{ color: "#2d9e6a", fontFamily: "Georgia,serif", fontSize: "1rem", marginBottom: "0.75rem" }}>
-                        Fine. You earned it.
+                    <p style={{ color: "#2d9e6a", fontFamily: "Georgia,serif", fontSize: "0.95rem", marginBottom: "0.6rem" }}>
+                        Fine. You earned it. (We're impressed. A little.)
                     </p>
-                    <button onClick={onComplete} style={{ background: "#1a1a1a", color: "white", border: "none", borderRadius: 100, padding: "0.65rem 2rem", fontSize: "0.85rem", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
-                        Close Now
+                    <button onClick={onComplete} style={{ background: "#1a1a1a", color: "white", border: "none", borderRadius: 100, padding: "0.65rem 2rem", fontSize: "0.85rem", cursor: "pointer", fontFamily: "inherit", fontWeight: 700 }}>
+                        Go Home
                     </button>
                 </motion.div>
             )}
             {dead && !won && (
-                <div>
-                    <p style={{ color: "#e63946", fontSize: "0.82rem", fontStyle: "italic", marginBottom: "0.5rem" }}>You ran into something. Classic.</p>
-                    <button onClick={reset} style={{ background: "#e63946", color: "white", border: "none", borderRadius: 100, padding: "0.6rem 1.5rem", fontSize: "0.82rem", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Try Again</button>
-                </div>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    <p style={{ color: "#e63946", fontSize: "0.8rem", fontStyle: "italic", marginBottom: "0.5rem" }}>
+                        You hit the wall. Or yourself. Classic.
+                    </p>
+                    <button onClick={reset} style={{ background: "#e63946", color: "white", border: "none", borderRadius: 100, padding: "0.6rem 1.5rem", fontSize: "0.82rem", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                        Try Again
+                    </button>
+                </motion.div>
             )}
             {!won && !dead && (
-                <p style={{ fontSize: "0.7rem", color: "#bbb", fontStyle: "italic" }}>Use arrow keys or the buttons above</p>
+                <p style={{ fontSize: "0.68rem", color: "#bbb", fontStyle: "italic" }}>
+                    Tap arrows above · or use keyboard arrow keys
+                </p>
+            )}
+        </div>
+    );
+};
+
+const dpadBtn = {
+    width: 52, height: 52, borderRadius: 12, border: "1.5px solid #e8e2e2",
+    background: "white", cursor: "pointer", fontSize: "1.2rem", fontWeight: 700,
+    color: "#333", display: "flex", alignItems: "center", justifyContent: "center",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.07)", fontFamily: "inherit",
+    transition: "background 0.1s",
+};
+
+/* ══════════════════════════════════════════════════════════════
+   COOKING GAME — shown on success "Close" button
+   Tap ingredients in the correct order to cook the dish.
+══════════════════════════════════════════════════════════════ */
+const RECIPES = [
+    {
+        name: "Spaghetti Aglio e Olio",
+        steps: ["Boil water", "Add pasta", "Heat olive oil", "Add garlic", "Toss pasta", "Add parsley", "Plate it"],
+        emoji: ["Pot", "Pasta", "Oil", "Garlic", "Fork", "Herb", "Plate"],
+        icons: ["○", "≋", "◉", "◈", "⌂", "❋", "▣"],
+    },
+    {
+        name: "Classic Bruschetta",
+        steps: ["Slice bread", "Grill bread", "Chop tomatoes", "Add basil", "Add olive oil", "Top bread", "Serve"],
+        emoji: ["Bread", "Grill", "Tomato", "Basil", "Oil", "Stack", "Serve"],
+        icons: ["▭", "≋", "◉", "❋", "◉", "▣", "✓"],
+    },
+];
+
+const CookingGame = ({ onComplete }) => {
+    const [recipe] = useState(() => RECIPES[Math.floor(Math.random() * RECIPES.length)]);
+    const [current, setCurrent] = useState(0);
+    const [done, setDone] = useState(false);
+    const [wrong, setWrong] = useState(null);
+    const [ripple, setRipple] = useState(null);
+
+    // Scramble available taps — show 3 options, only one is correct
+    const [choices, setChoices] = useState([]);
+
+    const buildChoices = (idx) => {
+        const correct = idx;
+        const others = recipe.steps.map((_, i) => i).filter(i => i !== correct && i !== idx - 1);
+        const picks = others.sort(() => Math.random() - 0.5).slice(0, 2);
+        const all = [correct, ...picks].sort(() => Math.random() - 0.5);
+        setChoices(all);
+    };
+
+    useEffect(() => { buildChoices(0); }, []);
+
+    const tap = (idx) => {
+        if (idx === current) {
+            setRipple(idx);
+            setTimeout(() => setRipple(null), 350);
+            const next = current + 1;
+            if (next >= recipe.steps.length) { setTimeout(() => setDone(true), 400); }
+            else { setCurrent(next); buildChoices(next); }
+            setWrong(null);
+        } else {
+            setWrong(idx);
+            setTimeout(() => setWrong(null), 600);
+        }
+    };
+
+    if (done) return (
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring" }} style={{ textAlign: "center", padding: "1rem 0" }}>
+            <p style={{ fontFamily: "Georgia,serif", fontSize: "1.3rem", color: "#1a1a1a", marginBottom: "0.5rem" }}>
+                "{recipe.name}" — done.
+            </p>
+            <p style={{ color: "#888", fontSize: "0.8rem", fontStyle: "italic", marginBottom: "1.5rem" }}>
+                The chef is moderately impressed. You may leave now.
+            </p>
+            <button onClick={onComplete} style={{ background: "#e63946", color: "white", border: "none", borderRadius: 100, padding: "0.8rem 2.5rem", fontSize: "0.88rem", cursor: "pointer", fontFamily: "inherit", fontWeight: 700, boxShadow: "0 4px 16px rgba(230,57,70,0.25)" }}>
+                Finally, go home
+            </button>
+        </motion.div>
+    );
+
+    return (
+        <div style={{ fontFamily: "'Nunito',-apple-system,sans-serif" }}>
+            <h3 style={{ fontFamily: "Georgia,serif", fontSize: "1.15rem", margin: "0 0 0.2rem", color: "#1a1a1a", textAlign: "center" }}>
+                Cook before you leave.
+            </h3>
+            <p style={{ color: "#888", fontSize: "0.75rem", textAlign: "center", fontStyle: "italic", marginBottom: "1rem" }}>
+                The chef insists. Tap the steps in order.
+            </p>
+
+            {/* Recipe name */}
+            <div style={{ background: "white", border: "1px solid #ede8e8", borderRadius: 12, padding: "0.6rem 1rem", marginBottom: "1rem", textAlign: "center" }}>
+                <p style={{ fontSize: "0.82rem", color: "#555", margin: 0, fontStyle: "italic" }}>Tonight's dish:</p>
+                <p style={{ fontFamily: "Georgia,serif", fontSize: "1rem", color: "#1a1a1a", margin: "3px 0 0", fontWeight: 500 }}>{recipe.name}</p>
+            </div>
+
+            {/* Progress bar of steps */}
+            <div style={{ display: "flex", gap: 4, marginBottom: "1rem" }}>
+                {recipe.steps.map((_, i) => (
+                    <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i < current ? "#e63946" : i === current ? "#f5b3b8" : "#f0ecea", transition: "background 0.3s" }} />
+                ))}
+            </div>
+
+            {/* Current instruction */}
+            <AnimatePresence mode="wait">
+                <motion.div key={current} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}
+                    style={{ background: "#1a1a1a", borderRadius: 14, padding: "1rem 1.25rem", marginBottom: "1rem", textAlign: "center" }}>
+                    <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.68rem", margin: "0 0 4px", letterSpacing: "0.06em", textTransform: "uppercase" }}>Step {current + 1} of {recipe.steps.length}</p>
+                    <p style={{ color: "white", fontFamily: "Georgia,serif", fontSize: "1rem", margin: 0 }}>{recipe.steps[current]}</p>
+                </motion.div>
+            </AnimatePresence>
+
+            {/* Three choice buttons */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {choices.map((idx) => (
+                    <motion.button
+                        key={idx + "-" + current}
+                        animate={wrong === idx ? { x: [-6, 6, -6, 6, 0] } : ripple === idx ? { scale: [1, 1.04, 1] } : {}}
+                        onClick={() => tap(idx)}
+                        style={{
+                            padding: "0.8rem 1rem", borderRadius: 12, border: "1.5px solid",
+                            borderColor: wrong === idx ? "#e63946" : ripple === idx ? "#2d9e6a" : "#e8e2e2",
+                            background: wrong === idx ? "#fff0f0" : ripple === idx ? "#f0faf5" : "white",
+                            color: "#1a1a1a", fontSize: "0.88rem", cursor: "pointer",
+                            fontFamily: "inherit", fontWeight: 500, textAlign: "left",
+                            display: "flex", alignItems: "center", gap: 10,
+                            transition: "border-color 0.15s, background 0.15s",
+                        }}
+                    >
+                        <span style={{ width: 28, height: 28, borderRadius: 8, background: "#f5f1f1", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.78rem", color: "#888", flexShrink: 0 }}>
+                            {String.fromCharCode(65 + choices.indexOf(idx))}
+                        </span>
+                        {recipe.steps[idx]}
+                    </motion.button>
+                ))}
+            </div>
+
+            {wrong !== null && (
+                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: "0.6rem", fontSize: "0.74rem", color: "#e63946", textAlign: "center", fontStyle: "italic" }}>
+                    That's not next. The chef is watching.
+                </motion.p>
             )}
         </div>
     );
