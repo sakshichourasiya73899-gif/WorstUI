@@ -580,36 +580,133 @@ const sectionTitle = {
 };
 
 /* ═══════════════════════════════════════════════════════
+   TIMER POPUP
+═══════════════════════════════════════════════════════ */
+const TimerPopup = ({ onClose }) => {
+  const [t, setT] = useState(30);
+  useEffect(() => {
+    const iv = setInterval(() => setT(n => { if (n <= 1) { onClose(); return 0; } return n - 1; }), 1000);
+    return () => clearInterval(iv);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ scale: 0.55, opacity: 0, y: -20 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      exit={{ scale: 0.6, opacity: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 24 }}
+      style={{
+        position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -56%)",
+        zIndex: 9999988, width: "min(420px, 92vw)",
+        background: t < 10 ? "#fff0f0" : "white",
+        border: `2px solid ${t < 10 ? "#e63946" : "#e0dada"}`,
+        borderRadius: 24, padding: "2.5rem 2.25rem 2rem",
+        boxShadow: "0 28px 70px rgba(0,0,0,0.28)",
+        fontFamily: "'Nunito',-apple-system,sans-serif", textAlign: "center",
+      }}
+    >
+      <p style={{ fontSize: "1.1rem", fontWeight: 800, color: "#1a1a1a", marginBottom: "1rem" }}>
+        Time is ticking! Checkout before someone else takes your food.
+      </p>
+      <div style={{ fontSize: "4rem", fontWeight: 900, color: t < 10 ? "#e63946" : "#1a1a1a", marginBottom: "1rem" }}>
+        {t}
+      </div>
+      <button onClick={onClose} style={{ background: "#1a1a1a", color: "white", padding: "0.8rem 2rem", borderRadius: 100, border: "none", cursor: "pointer", fontWeight: "bold" }}>
+        I'm trying!
+      </button>
+    </motion.div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   EXIT TEST
+═══════════════════════════════════════════════════════ */
+const ExitTest = ({ onPass }) => {
+  const [ans, setAns] = useState("");
+  const [err, setErr] = useState("");
+
+  const check = () => {
+    if (ans.trim() === "11") {
+      onPass();
+    } else {
+      setErr("Incorrect. We expected higher math skills.");
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      style={{
+        position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+        background: "white", padding: "2rem", borderRadius: 24, zIndex: 999999,
+        boxShadow: "0 20px 80px rgba(0,0,0,0.3)", textAlign: "center", width: 340,
+        border: "2px solid #e63946", fontFamily: "'Nunito',-apple-system,sans-serif"
+      }}
+    >
+      <h3 style={{ margin: "0 0 1rem", fontSize: "1.2rem", color: "#1a1a1a", fontFamily: "Georgia,serif" }}>Final Test</h3>
+      <p style={{ margin: "0 0 1rem", fontSize: "0.9rem", color: "#555" }}>
+        To prove you are a human who deserves to leave, please solve this complex equation:
+      </p>
+      <div style={{ fontWeight: "900", fontSize: "2rem", color: "#e63946", marginBottom: "1rem" }}>
+        1 + 1 = ?
+      </div>
+      <input 
+        value={ans} 
+        onChange={e => setAns(e.target.value)} 
+        placeholder="Your answer..." 
+        style={{ width: "100%", background: "#f9f7f7", padding: "0.8rem", borderRadius: 12, border: "1px solid #ede8e8", marginBottom: "1rem", outline: "none", fontSize: "1rem", textAlign: "center", fontFamily: "inherit" }}
+      />
+      {err && <p style={{ color: "#e63946", fontSize: "0.8rem", margin: "-0.5rem 0 1rem", fontWeight: "bold" }}>{err}</p>}
+      <button onClick={check} style={{ width: "100%", padding: "0.8rem", borderRadius: 100, background: "#1a1a1a", color: "white", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: "1rem" }}>
+        Submit Answer
+      </button>
+      <p style={{ fontSize: "0.7rem", color: "#888", marginTop: "1rem", fontStyle: "italic" }}>
+        Hint: Think like a javascript developer. Don't overthink the addition.
+      </p>
+    </motion.div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
    MAIN CHECKOUT PAGE
 ═══════════════════════════════════════════════════════ */
 const FoodyCheckout = () => {
   const navigate = useNavigate();
-  const { items, updateQty, removeFromCart, total, clearCart } = useCart();
+  const { items, updateQty, removeItem, total, clear } = useCart();
   const [showThief, setShowThief] = useState(false);
   const [stolenItem, setStolenItem] = useState(null);
   const [showStolenToast, setShowStolenToast] = useState(false);
   const [showThiefAlert, setShowThiefAlert] = useState(false);
-  const [thiefFired, setThiefFired] = useState(false);
   const [placed, setPlaced] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [payMethod, setPayMethod] = useState("card");
 
   const [form, setForm] = useState({
     name: "", street: "", city: "", zip: "",
-    phone: "", email: "",
+    phone: "",
     cardNum: "", expiry: "", cvv: "",
   });
+  const [showTimerPopup, setShowTimerPopup] = useState(false);
+  const [showExitTest, setShowExitTest] = useState(false);
 
-  // Fire thief after 12 seconds, only once, only if cart has items
   useEffect(() => {
-    if (thiefFired || items.length === 0) return;
     const t = setTimeout(() => {
-      setThiefFired(true);
+      setShowTimerPopup(true);
+    }, 8000);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Fire thief periodically as long as cart has items
+  useEffect(() => {
+    if (items.length === 0 || showThief || showThiefAlert) return;
+    const delay = 15000 + Math.random() * 10000; // Between 15-25 seconds
+    const t = setTimeout(() => {
       setShowThiefAlert(true);
       setTimeout(() => setShowThief(true), 400);
-    }, 12000);
+    }, delay);
     return () => clearTimeout(t);
-  }, [thiefFired, items.length]);
+  }, [items.length, showThief, showThiefAlert]);
 
   const handleSteal = useCallback(() => {
     if (items.length === 0) return;
@@ -618,10 +715,10 @@ const FoodyCheckout = () => {
     if (target.qty > 1) {
       updateQty(target.id, target.qty - 1);
     } else {
-      removeFromCart(target.id);
+      removeItem(target.id);
     }
     setShowStolenToast(true);
-  }, [items, updateQty, removeFromCart]);
+  }, [items, updateQty, removeItem]);
 
   const field = (key, placeholder, type = "text") => (
     <input
@@ -636,12 +733,12 @@ const FoodyCheckout = () => {
   );
 
   const canPlace = form.name && form.street && form.city &&
-    form.zip && form.phone.length >= 6 && form.email.includes("@");
+    form.zip && form.phone.length >= 6;
 
   const placeOrder = () => {
     if (!canPlace) return;
     setPlacing(true);
-    setTimeout(() => { setPlacing(false); setPlaced(true); clearCart(); }, 2800);
+    setTimeout(() => { setPlacing(false); setPlaced(true); clear(); }, 2800);
   };
 
   const subtotal = total;
@@ -652,6 +749,12 @@ const FoodyCheckout = () => {
   if (placed) return (
     <>
       <RageCursor />
+      {showExitTest && (
+        <>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 999998 }} />
+          <ExitTest onPass={() => navigate("/foody")} />
+        </>
+      )}
       <div style={{
         minHeight: "100vh", background: "#f5f1f1",
         display: "flex", alignItems: "center", justifyContent: "center",
@@ -671,7 +774,7 @@ const FoodyCheckout = () => {
           <p style={{ color: "#bbb", fontSize: "0.76rem", fontStyle: "italic", marginBottom: "2rem" }}>
             Estimated delivery: 30–45 minutes. Or longer. Or shorter. We'll see.
           </p>
-          <button onClick={() => navigate("/foody")}
+          <button onClick={() => setShowExitTest(true)}
             style={{ background: "#e63946", color: "white", border: "none", borderRadius: 100, padding: "0.85rem 2.5rem", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(230,57,70,0.25)" }}>
             Back to Foody
           </button>
@@ -713,6 +816,11 @@ const FoodyCheckout = () => {
         )}
       </AnimatePresence>
 
+      {/* Timer popup */}
+      <AnimatePresence>
+        {showTimerPopup && <TimerPopup onClose={() => setShowTimerPopup(false)} />}
+      </AnimatePresence>
+
       <div style={{
         minHeight: "100vh", background: "#f5f1f1",
         fontFamily: "'Nunito',-apple-system,sans-serif",
@@ -745,7 +853,6 @@ const FoodyCheckout = () => {
                 <p style={sectionTitle}>Delivery Address</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {field("name", "Full name")}
-                  {field("email", "Email address", "email")}
                   {field("street", "Street address")}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                     {field("city", "City")}
