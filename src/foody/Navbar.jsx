@@ -74,7 +74,7 @@ const Navbar = () => {
               aria-label="Cart"
             >
               <ShoppingCart className="w-[18px] h-[18px] text-neutral-700" />
-              {count > 0 && (
+              {currentUser && count > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#e63946] text-white text-[10px] flex items-center justify-center font-medium">
                   {count}
                 </span>

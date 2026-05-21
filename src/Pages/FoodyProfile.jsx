@@ -17,6 +17,83 @@ import {
   X
 } from "lucide-react";
 
+/* ═══════════════════════════════════════════════════════
+   LOGOUT GAME
+═══════════════════════════════════════════════════════ */
+const LogoutGame = ({ onConfirm, onCancel }) => {
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [attempts, setAttempts] = useState(0);
+  
+  const handleHover = () => {
+    if (attempts >= 3) return; // After 3 tries, let them click it
+    
+    setAttempts(a => a + 1);
+    // Button jumps randomly and shrinks slightly
+    const rx = (Math.random() - 0.5) * 200;
+    const ry = (Math.random() - 0.5) * 150;
+    setPos({ x: rx, y: ry });
+  };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)",
+      zIndex: 20000, display: "flex", alignItems: "center", justifyContent: "center"
+    }}>
+      <div style={{
+        background: "white", borderRadius: 32, padding: "3rem",
+        maxWidth: 500, width: "92%", textAlign: "center", position: "relative",
+        boxShadow: "0 30px 80px rgba(0,0,0,0.45)", overflow: "hidden"
+      }}>
+        <h2 style={{ fontFamily: "Georgia, serif", fontSize: "2rem", margin: "0 0 10px", color: "#222" }}>
+          Log Out?
+        </h2>
+        <p style={{ color: "#555", fontSize: "0.95rem", margin: "0 0 10px", fontWeight: 700 }}>
+          Just click the red button to confirm.
+        </p>
+          {attempts > 0 && (
+          <p style={{ color: "#e63946", fontSize: "0.8rem", margin: "0 0 10px", fontStyle: "italic", fontWeight: "bold" }}>
+            {attempts >= 3 ? "Okay, okay. You can log out now." : `Missed! Attempts: ${attempts}`}
+          </p>
+        )}
+        
+        <div style={{ position: "relative", height: 260, width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button
+            onMouseEnter={handleHover}
+            onClick={onConfirm}
+            style={{
+              position: "absolute",
+              transform: `translate(${pos.x}px, ${pos.y}px) scale(${Math.max(0.7, 1 - attempts * 0.1)})`,
+              transition: "transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+              background: "#e63946", color: "white", border: "none",
+              borderRadius: 100, padding: "10px 20px", fontSize: "0.9rem",
+              fontWeight: 800, cursor: "pointer", zIndex: 10,
+              boxShadow: "0 10px 25px rgba(230, 57, 70, 0.4)",
+              whiteSpace: "nowrap"
+            }}
+          >
+            Yes, Log Out
+          </button>
+          
+          <button
+            onClick={onCancel}
+            style={{
+              position: "absolute", bottom: 0,
+              background: "#f5f1f1", color: "#555", border: "none",
+              borderRadius: 100, padding: "10px 20px", fontSize: "0.9rem",
+              fontWeight: 800, cursor: "pointer", zIndex: 5,
+              transition: "transform 0.2s"
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
+            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+          >
+            Nevermind, I'll stay
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function FoodyProfile() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
@@ -42,6 +119,7 @@ export default function FoodyProfile() {
   const [revealedIndex, setRevealedIndex] = useState(null);
   const [gameFeedback, setGameFeedback] = useState("");
   const [deleteAttempts, setDeleteAttempts] = useState(0);
+  const [showLogoutGame, setShowLogoutGame] = useState(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem("currentUser");
@@ -179,6 +257,7 @@ export default function FoodyProfile() {
     
     // Clean session
     localStorage.removeItem("currentUser");
+    localStorage.removeItem("foody_cart");
     
     // Redirect to home page!
     navigate("/foody");
@@ -186,9 +265,7 @@ export default function FoodyProfile() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("currentUser");
-    navigate("/foody/auth");
-    window.location.reload();
+    setShowLogoutGame(true);
   };
 
   if (!currentUser) return null;
@@ -402,6 +479,19 @@ export default function FoodyProfile() {
             )}
           </div>
         </div>
+      )}
+
+      {/* ── Logout Game Overlay ── */}
+      {showLogoutGame && (
+        <LogoutGame 
+          onConfirm={() => {
+            localStorage.removeItem("currentUser");
+            localStorage.removeItem("foody_cart");
+            navigate("/foody");
+            window.location.reload();
+          }} 
+          onCancel={() => setShowLogoutGame(false)} 
+        />
       )}
 
       {/* ── Main Profile Container ── */}

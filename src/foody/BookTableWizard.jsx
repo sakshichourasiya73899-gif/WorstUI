@@ -13,20 +13,45 @@ const RageCursor = () => {
     const [pos, setPos] = useState({ x: -300, y: -300 });
     const [burst, setBurst] = useState(false);
     useEffect(() => {
-        const move = (e) => setPos({ x: e.clientX, y: e.clientY });
+        let animationFrameId;
+        let currentX = -300;
+        let currentY = -300;
+        let targetX = -300;
+        let targetY = -300;
+        
+        const move = (e) => {
+            targetX = e.clientX;
+            targetY = e.clientY;
+        };
+        
+        const loop = () => {
+            currentX += (targetX - currentX) * 0.25; // Smooth lerp
+            currentY += (targetY - currentY) * 0.25;
+            setPos({ x: currentX, y: currentY });
+            animationFrameId = requestAnimationFrame(loop);
+        };
+        
         const click = () => { setSize(s => Math.min(s + 16, 200)); setBurst(true); setTimeout(() => setBurst(false), 180); };
+        
         window.addEventListener("mousemove", move);
         window.addEventListener("click", click);
-        return () => { window.removeEventListener("mousemove", move); window.removeEventListener("click", click); };
+        animationFrameId = requestAnimationFrame(loop);
+        
+        return () => { 
+            window.removeEventListener("mousemove", move); 
+            window.removeEventListener("click", click); 
+            cancelAnimationFrame(animationFrameId);
+        };
     }, []);
     return (
         <div style={{
-            position: "fixed", left: pos.x - size / 2, top: pos.y - size / 2,
+            position: "fixed", left: 0, top: 0,
+            transform: `translate(${pos.x - size / 2}px, ${pos.y - size / 2}px)`,
             width: size, height: size, borderRadius: "50%",
             border: `${Math.max(2, size / 10)}px solid #e63946`,
             background: burst ? "rgba(230,57,70,0.15)" : "transparent",
             pointerEvents: "none", zIndex: 9999999,
-            transition: "width 0.4s, height 0.4s, left 0.04s, top 0.04s",
+            transition: "width 0.4s, height 0.4s",
         }} />
     );
 };
