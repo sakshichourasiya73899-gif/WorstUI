@@ -175,7 +175,7 @@ const TimerPopup = ({ onClose }) => {
 /* ══════════════════════════════════════════════════════════════
    MINI SNAKE GAME — X button guard. Simple, clear, no rage cursor.
 ══════════════════════════════════════════════════════════════ */
-const COLS = 10; const ROWS = 8; const CELL = 30;
+const COLS = 8; const ROWS = 6; const CELL = 34;
 const DIRS = { UP: [0, -1], DOWN: [0, 1], LEFT: [-1, 0], RIGHT: [1, 0] };
 
 const SnakeGame = ({ onComplete }) => {
@@ -216,12 +216,12 @@ const SnakeGame = ({ onComplete }) => {
                 if (prev.some(([x, y]) => x === head[0] && y === head[1])) { setDead(true); return prev; }
                 let next = [head, ...prev];
                 if (head[0] === food[0] && head[1] === food[1]) {
-                    setScore(sc => { const ns = sc + 1; if (ns >= 3) setTimeout(() => setWon(true), 250); return ns; });
+                    setScore(sc => { const ns = sc + 1; if (ns >= 2) setTimeout(() => setWon(true), 250); return ns; });
                     setFood(randFood(next));
                 } else { next = next.slice(0, -1); }
                 return next;
             });
-        }, 180); // slower = easier
+        }, 260); // slower = easier
         return () => clearInterval(iv);
     }, [started, dead, won, food]);
 
@@ -238,7 +238,7 @@ const SnakeGame = ({ onComplete }) => {
             {/* Title */}
             <h3 style={{ fontFamily: "Georgia,serif", fontSize: "1.25rem", margin: "0 0 0.25rem", color: "#1a1a1a" }}>Not so fast.</h3>
             <p style={{ color: "#888", fontSize: "0.78rem", marginBottom: "0.9rem", fontStyle: "italic" }}>
-                Collect 3 plates to unlock the exit.
+                Collect 2 plates to unlock the exit.
             </p>
 
             {/* Legend */}
@@ -256,7 +256,7 @@ const SnakeGame = ({ onComplete }) => {
 
             {/* Score dots */}
             <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: "0.75rem" }}>
-                {[0, 1, 2].map(i => (
+                {[0, 1].map(i => (
                     <div key={i} style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #e63946", background: i < score ? "#e63946" : "transparent", transition: "background 0.2s" }} />
                 ))}
             </div>
@@ -1012,7 +1012,7 @@ const CloseGuard = ({ onForceClose }) => (
                 You want to leave?
             </h3>
             <p style={{ color: "#888", fontSize: "0.8rem", fontStyle: "italic", marginBottom: "1.5rem" }}>
-                Prove it. Collect 3 items to unlock the exit.
+                Prove it. Collect 2 items to unlock the exit.
             </p>
             <SnakeGame onComplete={onForceClose} />
         </motion.div>
@@ -1130,11 +1130,7 @@ const BookTableWizard = ({ onClose }) => {
     const handleForceClose = () => { setShowCloseGuard(false); onClose(); };
 
     if (showCloseGuard) return (
-        <>
-            <RageCursor />
-            <CloseGuard onForceClose={handleForceClose} />
-            <style>{`* { cursor: none !important; }`}</style>
-        </>
+        <CloseGuard onForceClose={handleForceClose} />
     );
 
     if (done) return (

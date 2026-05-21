@@ -1,9 +1,11 @@
 import { ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCart } from "./CartContext";
+import { useNavigate } from "react-router-dom";
 
 const FoodCard = ({ food }) => {
   const { addItem } = useCart();
+  const navigate = useNavigate();
 
   return (
     <motion.div
@@ -15,7 +17,14 @@ const FoodCard = ({ food }) => {
         <img src={food.image} alt={food.name} className="w-full h-full object-cover" />
       </div>
       <button
-        onClick={() => addItem(food)}
+        onClick={() => {
+          const userStr = localStorage.getItem("currentUser");
+          if (userStr) {
+            addItem(food);
+          } else {
+            navigate("/foody/auth");
+          }
+        }}
         className="absolute top-4 right-4 w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:bg-[#e63946] transition"
         aria-label={`Add ${food.name}`}
       >

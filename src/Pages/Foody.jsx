@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Star, BadgePercent, CheckCircle2 } from "lucide-react";
 import Navbar from "@/foody/Navbar";
 import MenuCarousel from "@/foody/MenuCarousel";
@@ -10,6 +11,7 @@ import { foods, heroBowl } from "@/foody/data";
 
 /* ─── Main Component ──────────────────────────────────── */
 const Foody = () => {
+  const navigate = useNavigate();
   const [showCookie, setShowCookie] = useState(true);
   const [showDeletedAlert, setShowDeletedAlert] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
@@ -59,7 +61,14 @@ const Foody = () => {
               </button>
               {/* ← WIRED UP */}
               <button
-                onClick={() => setShowWizard(true)}
+                onClick={() => {
+                  const userStr = localStorage.getItem("currentUser");
+                  if (userStr) {
+                    setShowWizard(true);
+                  } else {
+                    navigate("/foody/auth");
+                  }
+                }}
                 className="bg-white hover:bg-neutral-50 text-neutral-900 px-8 py-3.5 rounded-full text-sm font-medium transition shadow-sm"
               >
                 Book A Table

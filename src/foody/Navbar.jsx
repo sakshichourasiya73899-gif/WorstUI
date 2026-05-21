@@ -63,7 +63,13 @@ const Navbar = () => {
           <div className="flex items-center gap-3">
             {/* Cart */}
             <button
-              onClick={() => navigate("/foody/checkout")}
+              onClick={() => {
+                if (currentUser) {
+                  navigate("/foody/checkout");
+                } else {
+                  navigate("/foody/auth");
+                }
+              }}
               className="relative w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center hover:border-neutral-300 hover:shadow-sm transition"
               aria-label="Cart"
             >
